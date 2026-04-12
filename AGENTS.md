@@ -46,6 +46,30 @@ Cloudflare Pages site. Deploys automatically on push to `main`.
 - `site/src/layouts/` — Shared layout (nav, footer)
 - `site/src/styles/` — Global CSS design system
 
+## Writing Prose
+
+This is a public-facing site for policy professionals, researchers, and
+journalists. All prose must pass a slop check before committing.
+
+**Kill on sight:**
+- Meta-commentary: "This page documents...", "In this section we will..."
+- Hallmark AI phrases: delve, navigate, landscape, tapestry, robust, seamless
+- Empty hedging: "It is important to note", "It's worth noting"
+- Nominalizations: "the utilization of" → "using"
+- Corporate filler: "leverage", "paradigm", "transformative"
+- Em dashes as parenthetical crutches. Write a full sentence instead.
+
+**Prefer:**
+- Complete sentences with strong verbs. Not fragments. Not hedged clauses.
+- Short sentences for claims, longer ones for explanation. Vary the rhythm.
+- Concrete examples over abstract descriptions ("Kenya sits here" not "countries in this quadrant tend to...")
+- Plain verbs: show, use, track, compute. Not illuminate, leverage, facilitate.
+- Direct claims when evidence supports them. Hedge only genuine uncertainty.
+- Bullets for discrete items. Prose for relationships between ideas.
+
+**Test:** Read it aloud. If it sounds like a press release or a textbook
+introduction, rewrite it.
+
 ## Verification
 
 1. Pipeline produces valid JSON: `python -c "import json; json.load(open('site/public/data/countries.json')); json.load(open('site/public/data/waves.json'))"`

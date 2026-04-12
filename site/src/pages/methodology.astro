@@ -8,11 +8,10 @@ import Base from '../layouts/Base.astro';
       <h1>Methodology</h1>
 
       <p class="lede">
-        This page documents how the AI Matrix scores are computed. The methodology
-        replicates
+        How the scores are computed. The methodology replicates
         <a href="https://doi.org/10.2139/ssrn.5228571" target="_blank" rel="noopener">Simpson (2025)</a>.
-        All code is open source in the
-        <a href="https://github.com/michaelquinn32/ai-matrix-live/tree/main/pipeline" target="_blank" rel="noopener">pipeline directory</a>.
+        All code is
+        <a href="https://github.com/michaelquinn32/ai-matrix-live/tree/main/pipeline" target="_blank" rel="noopener">open source</a>.
       </p>
 
       <h2>Data source</h2>
@@ -33,12 +32,12 @@ import Base from '../layouts/Base.astro';
       <p>
         The agency score is the mean of up to four min-max normalised components:
       </p>
-      <ol>
-        <li><strong>Co-creation rate</strong> — the sum of task iteration, learning, and validation proportions among all conversations. Higher co-creation indicates more productive human-AI collaboration.</li>
-        <li><strong>Directive rate (inverted)</strong> — the proportion of purely directive conversations, inverted so that lower directive usage yields a higher agency score.</li>
-        <li><strong>Task success rate</strong> — the proportion of conversations classified as successful.</li>
-        <li><strong>Prompt education level</strong> — the mean education-years estimate of prompt content.</li>
-      </ol>
+      <ul>
+        <li><strong>Co-creation rate:</strong> task iteration + learning + validation as a share of all conversations</li>
+        <li><strong>Directive rate (inverted):</strong> share of purely directive conversations, flipped so less directive = higher agency</li>
+        <li><strong>Task success rate:</strong> share of conversations classified as successful</li>
+        <li><strong>Prompt education level:</strong> mean education-years estimate of prompt content</li>
+      </ul>
       <p>
         Each component is min-max normalised across all countries in the release
         to a [0, 1] range. The composite is the arithmetic mean. When a component
@@ -63,10 +62,10 @@ import Base from '../layouts/Base.astro';
         to use-case share data. The rules are applied in order; the first match wins:
       </p>
       <ol>
-        <li><strong>Stage 1 (Full Dependency)</strong> — coursework share &gt; 30%</li>
-        <li><strong>Stage 2 (Elite Empowerment)</strong> — work share &gt; 48% AND coursework share &lt; 25%</li>
-        <li><strong>Stage 3 (Passive Dependency)</strong> — personal share &gt; 38%</li>
-        <li><strong>Residual</strong> — classified by agency composite score: &ge; 0.55 → Stage 2; &ge; 0.42 → Stage 3; otherwise Stage 1</li>
+        <li><strong>Stage 1 (Full Dependency):</strong> coursework share &gt; 30%</li>
+        <li><strong>Stage 2 (Elite Empowerment):</strong> work share &gt; 48% AND coursework share &lt; 25%</li>
+        <li><strong>Stage 3 (Passive Dependency):</strong> personal share &gt; 38%</li>
+        <li><strong>Residual:</strong> agency composite score &ge; 0.55 → Stage 2; &ge; 0.42 → Stage 3; otherwise Stage 1</li>
       </ol>
       <p>
         When use-case data is not available (as in the September 2025 release),
@@ -121,11 +120,11 @@ import Base from '../layouts/Base.astro';
 
       <h2>Limitations</h2>
       <ul>
-        <li><strong>Single-platform data.</strong> The AEI captures Claude usage only, not all AI tools. Countries with high adoption of other tools (e.g., ChatGPT, Gemini) may appear to have lower access than their actual AI engagement warrants.</li>
-        <li><strong>Selection bias.</strong> Claude's user base skews toward English-speaking, higher-income populations. This likely inflates access scores for Anglophone countries and depresses them for countries where other AI tools dominate.</li>
-        <li><strong>One-week sampling window.</strong> Each release captures a single week of usage, which may not be representative of longer-term patterns.</li>
-        <li><strong>Threshold sensitivity.</strong> The stage assignment rules use fixed thresholds from the companion paper. Small changes in these thresholds can shift individual countries between stages.</li>
-        <li><strong>Variable availability varies.</strong> Earlier releases have fewer agency components, making cross-wave comparisons less precise.</li>
+        <li><strong>Single platform.</strong> The AEI captures Claude only. Countries where ChatGPT or Gemini dominate will look lower-access than they are.</li>
+        <li><strong>Selection bias.</strong> Claude skews English-speaking and higher-income. Anglophone access scores are likely inflated.</li>
+        <li><strong>One-week window.</strong> Each release samples a single week, which may not reflect longer-term patterns.</li>
+        <li><strong>Threshold sensitivity.</strong> Stage rules use fixed cutpoints from the paper. Small changes can move individual countries between stages.</li>
+        <li><strong>Variable availability.</strong> Earlier releases have fewer agency components, so cross-wave comparisons are less precise.</li>
       </ul>
 
       <h2>Citation</h2>

@@ -8,33 +8,29 @@ import Base from '../layouts/Base.astro';
       <h1>The AI Matrix Framework</h1>
 
       <p class="lede">
-        The AI Matrix positions countries on two independent dimensions — access
-        and agency — revealing four distinct patterns of AI adoption. It was
-        introduced in
+        The AI Matrix plots countries on two axes: how broadly AI reaches their
+        population (access) and how productively people use it once it arrives
+        (agency). The framework comes from
         <a href="https://doi.org/10.2139/ssrn.5228571" target="_blank" rel="noopener">Simpson (2025)</a>
-        and is updated here with each new Anthropic Economic Index release.
+        and is recomputed here each time Anthropic publishes new data.
       </p>
 
       <h2>Two dimensions</h2>
 
-      <h3>Access: how broadly AI reaches the population</h3>
+      <h3>Access: how many people use AI</h3>
       <p>
-        Access measures the extent to which AI tools are available to a country's
-        population, calculated as the log-transformed per-capita rate of
-        conversations with Claude. Countries with high access have AI tools
-        reaching a significant share of their population; countries with low
-        access have AI usage concentrated among a small number of users.
+        Access is the log-transformed per-capita rate of conversations with
+        Claude. A high-access country has AI reaching a broad share of its
+        population. A low-access country has usage concentrated among a few.
       </p>
 
-      <h3>Agency: how productively people engage</h3>
+      <h3>Agency: what they do with it</h3>
       <p>
-        Agency measures the quality of engagement once access exists. It is a
-        composite of four indicators: the proportion of conversations involving
-        active co-creation (task iteration, learning, and validation combined),
-        the proportion that are purely directive (inverted — lower is better),
-        the task success rate, and the education level of prompts. Countries
-        with high agency use AI as a collaborative tool; countries with low
-        agency tend toward passive or directive interaction patterns.
+        Agency is a composite of four indicators: how often people co-create
+        with AI (task iteration, learning, validation) rather than just issuing
+        directives, how often tasks succeed, and the education level reflected
+        in prompts. High agency means people treat AI as a collaborator. Low
+        agency means they treat it as a vending machine.
       </p>
 
       <h2>Four quadrants</h2>
@@ -42,33 +38,31 @@ import Base from '../layouts/Base.astro';
       <div class="quadrant-grid">
         <div class="quadrant quadrant--full-empowerment">
           <h3><span class="stage-badge stage-badge--full-empowerment">Full Empowerment</span></h3>
-          <p>High access, high agency. AI tools are broadly available and people engage with them productively. The aspirational quadrant.</p>
+          <p>High access, high agency. AI is widely available and people co-create with it. No country sits here yet.</p>
         </div>
         <div class="quadrant quadrant--passive-dependency">
           <h3><span class="stage-badge stage-badge--passive-dependency">Passive Dependency</span></h3>
-          <p>High access, low agency. AI tools are widely available but usage patterns lean toward personal or directive interactions rather than productive co-creation.</p>
+          <p>High access, low agency. Lots of people have AI, but they mostly issue one-off commands or use it for personal tasks. The US, UK, Germany, and Japan sit here.</p>
         </div>
         <div class="quadrant quadrant--elite-empowerment">
           <h3><span class="stage-badge stage-badge--elite-empowerment">Elite Empowerment</span></h3>
-          <p>Low access, high agency. AI tools reach only a small share of the population, but those who use them engage productively — often for professional work.</p>
+          <p>Low access, high agency. Few people have AI, but those who do use it for real work. India, Brazil, and South Africa sit here.</p>
         </div>
         <div class="quadrant quadrant--full-dependency">
           <h3><span class="stage-badge stage-badge--full-dependency">Full Dependency</span></h3>
-          <p>Low access, low agency. AI tools are neither broadly available nor productively used. Usage is often concentrated in coursework and education.</p>
+          <p>Low access, low agency. AI barely reaches the population, and what use exists skews toward coursework. Kenya and much of Sub-Saharan Africa sit here.</p>
         </div>
       </div>
 
       <h2>Why it matters</h2>
       <p>
-        Most discussions of the "AI divide" focus only on access — who has AI and
-        who doesn't. The AI Matrix shows this is half the picture. A country can
-        have widespread access but low agency (passive dependency), or limited
-        access but highly productive usage (elite empowerment). Effective AI
-        policy requires understanding both dimensions.
+        Most talk about the "AI divide" stops at access: who has AI and who
+        doesn't. That's half the picture. The US has high access but middling
+        agency. India has low access but its users co-create at high rates.
+        Policy that only measures adoption misses what happens after adoption.
       </p>
       <p>
-        For the full methodology, including composite construction, threshold
-        rules, and data sources, see the <a href="/methodology">methodology page</a>.
+        <a href="/methodology">Full methodology &rarr;</a>
       </p>
     </div>
   </section>
