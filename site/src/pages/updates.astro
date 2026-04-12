@@ -1,0 +1,62 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Updates" description="Per-release commentary and analysis as new Anthropic Economic Index data arrives.">
+  <section class="container page-content">
+    <div class="prose">
+      <h1>Updates</h1>
+
+      <p class="lede">
+        Each time the Anthropic Economic Index publishes new data, we rerun the
+        AI Matrix pipeline and document what changed. This page will track
+        shifts in country positions, stage transitions, and emerging patterns
+        across releases.
+      </p>
+
+      <div class="placeholder">
+        <p class="placeholder__icon">&#9672;</p>
+        <p class="placeholder__text">
+          Updates will appear here as new AEI releases are processed.
+          The pipeline currently covers three releases: September 2025,
+          January 2026, and March 2026.
+        </p>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .page-content {
+    padding: var(--space-lg) 0;
+  }
+
+  .lede {
+    font-size: var(--text-h3);
+    color: var(--text-primary);
+    line-height: 1.5;
+    margin-bottom: var(--space-lg);
+  }
+
+  .placeholder {
+    text-align: center;
+    padding: var(--space-xl) var(--space-md);
+    background: var(--bg-surface);
+    border: 1px dashed var(--border-strong);
+    border-radius: 8px;
+    margin: var(--space-lg) 0;
+  }
+
+  .placeholder__icon {
+    font-size: 2rem;
+    color: var(--text-muted);
+    margin-bottom: var(--space-sm);
+  }
+
+  .placeholder__text {
+    color: var(--text-muted);
+    font-size: var(--text-small);
+    max-width: 400px;
+    margin: 0 auto;
+  }
+</style>
