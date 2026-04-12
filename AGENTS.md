@@ -16,20 +16,22 @@ Empowerment, Elite Empowerment, Passive Dependency, Full Dependency.
 Data source: Anthropic Economic Index (AEI) on HuggingFace
 (`Anthropic/EconomicIndex`), released roughly quarterly. Pipeline detects new
 releases, applies the paper's methodology, outputs static JSON consumed by a
-GitHub Pages site.
+Cloudflare Pages site. Deploys automatically on push to `main`.
 
 ## Commands
 
-- Install pipeline deps: `uv pip install -r pipeline/requirements.txt`
-- Run pipeline locally: `uv run python pipeline/run.py`
-- Serve site locally: `python -m http.server 8000 --directory docs`
+- Install deps: `uv sync`
+- Run pipeline: `uv run python pipeline/run.py`
+- Run notebooks: `uv run marimo edit <notebook.py>`
+- Serve site locally: `uv run python -m http.server 8000 --directory docs`
 
 ## STOP List
 
 - Do NOT use frameworks or build tools for the website — plain HTML, CSS, JS only
 - Do NOT hardcode AEI release folder names — detect dynamically from HuggingFace
-- Do NOT commit to `main` without permission — this repo auto-deploys via GitHub Pages
+- Do NOT commit to `main` without permission — this repo auto-deploys via Cloudflare Pages
 - Do NOT install Python packages globally — use `uv`
+- Do NOT use Jupyter notebooks — use marimo (`*.py` notebooks) for all interactive work
 - Do NOT modify the methodology (thresholds, composite formula) without discussion — these replicate a published paper
 
 ## Verification
