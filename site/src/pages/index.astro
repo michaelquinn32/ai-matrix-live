@@ -13,10 +13,9 @@ import Base from '../layouts/Base.astro';
         </p>
       </div>
       <div class="chart-container">
-        <div id="matrix-scatter" class="chart-placeholder">
-          <p>Loading chart...</p>
-        </div>
+        <div id="matrix-scatter"></div>
       </div>
+      <p class="hero__updated" id="last-updated"></p>
     </div>
   </section>
 
@@ -27,16 +26,335 @@ import Base from '../layouts/Base.astro';
         Each dot is a country. The horizontal axis measures <strong>access</strong>
         — how broadly AI tools reach the population (log per-capita conversations
         with Claude). The vertical axis measures <strong>agency</strong> — how
-        productively people engage once they have access (a composite of co-creation
-        rate, task success, and interaction patterns).
+        productively people engage once they have access. Dot size reflects the
+        absolute volume of AI conversations.
       </p>
       <p>
-        The intersection places each country in one of four quadrants.
+        Press play to watch countries move across releases. Colors indicate the
+        four stages of AI adoption.
         <a href="/framework">Learn about the framework &rarr;</a>
       </p>
     </div>
   </section>
 </Base>
+
+<script is:inline src="https://cdn.plot.ly/plotly-2.35.3.min.js"></script>
+<script is:inline>
+(async function () {
+  // -----------------------------------------------------------------------
+  // Config
+  // -----------------------------------------------------------------------
+
+  const STAGE_COLORS = {
+    'Full Dependency':    '#D55E00',
+    'Elite Empowerment':  '#E69F00',
+    'Passive Dependency': '#0072B2',
+    'Full Empowerment':   '#56B4E9',
+  };
+
+  const STAGE_ORDER = [
+    'Full Empowerment',
+    'Elite Empowerment',
+    'Passive Dependency',
+    'Full Dependency',
+  ];
+
+  const RELEASE_LABELS = {
+    '2025_09_15': 'Sep 2025',
+    '2026_01_15': 'Jan 2026',
+    '2026_03_24': 'Mar 2026',
+  };
+
+  // -----------------------------------------------------------------------
+  // Load data
+  // -----------------------------------------------------------------------
+
+  const resp = await fetch('/data/waves.json');
+  const waves = await resp.json();
+
+  if (!waves || waves.length === 0) {
+    document.getElementById('matrix-scatter').innerHTML =
+      '<p style="text-align:center;color:var(--text-muted)">No data available</p>';
+    return;
+  }
+
+  // Build a union of all countries across all waves (for consistent animation)
+  const allIso3 = new Set();
+  for (const wave of waves) {
+    for (const c of wave.countries) {
+      allIso3.add(c.iso3);
+    }
+  }
+  const countryList = Array.from(allIso3).sort();
+
+  // -----------------------------------------------------------------------
+  // Build frames
+  // -----------------------------------------------------------------------
+
+  // Helper: log-scale dot sizes from usage_count
+  function dotSize(usageCount) {
+    if (!usageCount || usageCount <= 0) return 4;
+    // log10 scale, clamped to reasonable range
+    const s = Math.log10(usageCount);
+    return Math.max(5, Math.min(40, s * 8));
+  }
+
+  function buildTraces(wave) {
+    // Group countries by stage for legend
+    const byStage = {};
+    for (const stage of STAGE_ORDER) {
+      byStage[stage] = [];
+    }
+
+    for (const c of wave.countries) {
+      if (c.access_score == null || c.agency_composite == null) continue;
+      const stage = c.stage_name || 'Full Dependency';
+      if (!byStage[stage]) byStage[stage] = [];
+      byStage[stage].push(c);
+    }
+
+    return STAGE_ORDER.map(function (stage) {
+      const countries = byStage[stage] || [];
+      return {
+        x: countries.map(function (c) { return c.access_score; }),
+        y: countries.map(function (c) { return c.agency_composite; }),
+        text: countries.map(function (c) { return c.country_name; }),
+        customdata: countries.map(function (c) {
+          return [
+            c.iso3,
+            c.stage_name,
+            c.usage_count,
+            c.stage_rule,
+            (c.co_creation != null ? (c.co_creation * 100).toFixed(1) + '%' : 'N/A'),
+            (c.task_success_rate != null ? (c.task_success_rate * 100).toFixed(1) + '%' : 'N/A'),
+          ];
+        }),
+        marker: {
+          size: countries.map(function (c) { return dotSize(c.usage_count); }),
+          color: STAGE_COLORS[stage],
+          opacity: 0.85,
+          line: { width: 1, color: 'rgba(255,255,255,0.2)' },
+        },
+        name: stage,
+        type: 'scatter',
+        mode: 'markers',
+        hovertemplate:
+          '<b>%{text}</b> (%{customdata[0]})<br>' +
+          'Stage: %{customdata[1]}<br>' +
+          'Access: %{x:.3f}<br>' +
+          'Agency: %{y:.3f}<br>' +
+          'Conversations: %{customdata[2]:,.0f}<br>' +
+          'Co-creation: %{customdata[4]}<br>' +
+          'Task success: %{customdata[5]}<br>' +
+          '<extra></extra>',
+      };
+    });
+  }
+
+  // Initial data: first wave
+  var initialTraces = buildTraces(waves[0]);
+
+  // Frames for animation
+  var frames = waves.map(function (wave) {
+    var label = RELEASE_LABELS[wave.release] || wave.release;
+    var traces = buildTraces(wave);
+    return {
+      name: label,
+      data: traces,
+    };
+  });
+
+  // -----------------------------------------------------------------------
+  // Layout
+  // -----------------------------------------------------------------------
+
+  // Compute axis ranges from all waves
+  var allX = [], allY = [];
+  for (var w = 0; w < waves.length; w++) {
+    for (var c = 0; c < waves[w].countries.length; c++) {
+      var country = waves[w].countries[c];
+      if (country.access_score != null) allX.push(country.access_score);
+      if (country.agency_composite != null) allY.push(country.agency_composite);
+    }
+  }
+  var xMin = Math.min.apply(null, allX), xMax = Math.max.apply(null, allX);
+  var yMin = Math.min.apply(null, allY), yMax = Math.max.apply(null, allY);
+  var xPad = (xMax - xMin) * 0.05, yPad = (yMax - yMin) * 0.05;
+
+  // Medians for quadrant lines (from latest wave)
+  var latestCountries = waves[waves.length - 1].countries.filter(function (c) {
+    return c.access_score != null && c.agency_composite != null;
+  });
+  var sortedX = latestCountries.map(function (c) { return c.access_score; }).sort(function (a, b) { return a - b; });
+  var sortedY = latestCountries.map(function (c) { return c.agency_composite; }).sort(function (a, b) { return a - b; });
+  var medianX = sortedX[Math.floor(sortedX.length / 2)];
+  var medianY = sortedY[Math.floor(sortedY.length / 2)];
+
+  var sliderSteps = waves.map(function (wave, i) {
+    var label = RELEASE_LABELS[wave.release] || wave.release;
+    return {
+      method: 'animate',
+      label: label,
+      args: [
+        [label],
+        {
+          mode: 'immediate',
+          transition: { duration: 800, easing: 'cubic-in-out' },
+          frame: { duration: 800, redraw: false },
+        },
+      ],
+    };
+  });
+
+  var layout = {
+    xaxis: {
+      title: { text: 'Access (log per-capita usage)', font: { family: 'JetBrains Mono, monospace', size: 12 } },
+      range: [xMin - xPad, xMax + xPad],
+      gridcolor: 'rgba(235,230,220,0.08)',
+      zerolinecolor: 'rgba(235,230,220,0.08)',
+      tickfont: { family: 'JetBrains Mono, monospace', size: 10, color: 'rgba(235,230,220,0.55)' },
+    },
+    yaxis: {
+      title: { text: 'Agency (composite score)', font: { family: 'JetBrains Mono, monospace', size: 12 } },
+      range: [yMin - yPad, yMax + yPad],
+      gridcolor: 'rgba(235,230,220,0.08)',
+      zerolinecolor: 'rgba(235,230,220,0.08)',
+      tickfont: { family: 'JetBrains Mono, monospace', size: 10, color: 'rgba(235,230,220,0.55)' },
+    },
+    shapes: [
+      // Vertical quadrant line
+      { type: 'line', x0: medianX, x1: medianX, y0: yMin - yPad, y1: yMax + yPad,
+        line: { color: 'rgba(235,230,220,0.15)', width: 1, dash: 'dash' } },
+      // Horizontal quadrant line
+      { type: 'line', x0: xMin - xPad, x1: xMax + xPad, y0: medianY, y1: medianY,
+        line: { color: 'rgba(235,230,220,0.15)', width: 1, dash: 'dash' } },
+    ],
+    annotations: [
+      // Quadrant labels — placed in the four corners of the plot area
+      // The AI Matrix maps: x = access (low→high), y = agency (low→high)
+      { x: xMax + xPad * 0.5, y: yMax + yPad * 0.5, text: 'Full<br>Empowerment', showarrow: false,
+        font: { family: 'Instrument Serif, serif', size: 14, color: 'rgba(86,180,233,0.3)' },
+        xanchor: 'right', yanchor: 'top' },
+      { x: xMax + xPad * 0.5, y: yMin - yPad * 0.5, text: 'Passive<br>Dependency', showarrow: false,
+        font: { family: 'Instrument Serif, serif', size: 14, color: 'rgba(0,114,178,0.3)' },
+        xanchor: 'right', yanchor: 'bottom' },
+      { x: xMin - xPad * 0.5, y: yMax + yPad * 0.5, text: 'Elite<br>Empowerment', showarrow: false,
+        font: { family: 'Instrument Serif, serif', size: 14, color: 'rgba(230,159,0,0.3)' },
+        xanchor: 'left', yanchor: 'top' },
+      { x: xMin - xPad * 0.5, y: yMin - yPad * 0.5, text: 'Full<br>Dependency', showarrow: false,
+        font: { family: 'Instrument Serif, serif', size: 14, color: 'rgba(213,94,0,0.3)' },
+        xanchor: 'left', yanchor: 'bottom' },
+      // Axis concept labels
+      { x: medianX, y: yMax + yPad * 0.5, text: 'Access →', showarrow: false,
+        font: { family: 'JetBrains Mono, monospace', size: 10, color: 'rgba(235,230,220,0.2)' },
+        xanchor: 'center', yanchor: 'top' },
+      { x: xMin - xPad * 0.5, y: medianY, text: 'Agency →', showarrow: false, textangle: -90,
+        font: { family: 'JetBrains Mono, monospace', size: 10, color: 'rgba(235,230,220,0.2)' },
+        xanchor: 'right', yanchor: 'middle' },
+    ],
+    plot_bgcolor: '#0f1014',
+    paper_bgcolor: '#0f1014',
+    font: { color: 'rgba(235,230,220,0.85)', family: 'Instrument Sans, system-ui, sans-serif' },
+    legend: {
+      orientation: 'h',
+      yanchor: 'bottom',
+      y: 1.02,
+      xanchor: 'center',
+      x: 0.5,
+      font: { size: 12 },
+    },
+    margin: { l: 60, r: 30, t: 40, b: 60 },
+    hovermode: 'closest',
+
+    // Animation controls
+    updatemenus: [{
+      type: 'buttons',
+      showactive: false,
+      x: 0.05,
+      y: -0.12,
+      xanchor: 'left',
+      yanchor: 'top',
+      direction: 'left',
+      pad: { t: 0, r: 10 },
+      buttons: [
+        {
+          label: '&#9654; Play',
+          method: 'animate',
+          args: [
+            null,
+            {
+              fromcurrent: true,
+              frame: { duration: 1500, redraw: false },
+              transition: { duration: 800, easing: 'cubic-in-out' },
+              mode: 'immediate',
+            },
+          ],
+        },
+        {
+          label: '&#9724; Pause',
+          method: 'animate',
+          args: [
+            [null],
+            {
+              mode: 'immediate',
+              frame: { duration: 0, redraw: false },
+              transition: { duration: 0 },
+            },
+          ],
+        },
+      ],
+    }],
+
+    sliders: [{
+      active: 0,
+      pad: { t: 30, b: 10 },
+      x: 0.15,
+      len: 0.85,
+      xanchor: 'left',
+      y: -0.12,
+      yanchor: 'top',
+      currentvalue: {
+        prefix: 'Release: ',
+        visible: true,
+        xanchor: 'center',
+        font: { family: 'JetBrains Mono, monospace', size: 12, color: 'rgba(235,230,220,0.85)' },
+      },
+      transition: { duration: 800, easing: 'cubic-in-out' },
+      steps: sliderSteps,
+    }],
+  };
+
+  // -----------------------------------------------------------------------
+  // Render
+  // -----------------------------------------------------------------------
+
+  var config = {
+    responsive: true,
+    displayModeBar: true,
+    modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d'],
+    displaylogo: false,
+    toImageButtonOptions: {
+      format: 'svg',
+      filename: 'ai-matrix-live',
+      width: 1200,
+      height: 750,
+    },
+  };
+
+  Plotly.newPlot('matrix-scatter', initialTraces, layout, config).then(function () {
+    Plotly.addFrames('matrix-scatter', frames);
+  });
+
+  // Update the "last updated" text
+  var latest = waves[waves.length - 1];
+  var dateEnd = latest.metadata && latest.metadata.date_end;
+  var el = document.getElementById('last-updated');
+  if (el && dateEnd) {
+    var releaseLabel = RELEASE_LABELS[latest.release] || latest.release;
+    el.textContent = 'Last updated: ' + releaseLabel + ' release (' + dateEnd + ')';
+  }
+})();
+</script>
 
 <style>
   .hero {
@@ -55,17 +373,22 @@ import Base from '../layouts/Base.astro';
     margin: 0 auto;
   }
 
-  .chart-placeholder {
-    width: 100%;
-    aspect-ratio: 16 / 10;
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-muted);
+  .hero__updated {
+    text-align: center;
     font-family: var(--font-mono);
     font-size: var(--text-small);
+    color: var(--text-muted);
+    margin-top: var(--space-sm);
+  }
+
+  #matrix-scatter {
+    width: 100%;
+    min-height: 550px;
+  }
+
+  @media (max-width: 600px) {
+    #matrix-scatter {
+      min-height: 400px;
+    }
   }
 </style>
