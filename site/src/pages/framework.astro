@@ -1,0 +1,116 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Framework" description="The AI Matrix framework: access, agency, and the four quadrants of global AI adoption.">
+  <section class="container page-content">
+    <div class="prose">
+      <h1>The AI Matrix Framework</h1>
+
+      <p class="lede">
+        The AI Matrix positions countries on two independent dimensions — access
+        and agency — revealing four distinct patterns of AI adoption. It was
+        introduced in
+        <a href="https://doi.org/10.2139/ssrn.5228571" target="_blank" rel="noopener">Simpson (2025)</a>
+        and is updated here with each new Anthropic Economic Index release.
+      </p>
+
+      <h2>Two dimensions</h2>
+
+      <h3>Access: how broadly AI reaches the population</h3>
+      <p>
+        Access measures the extent to which AI tools are available to a country's
+        population, calculated as the log-transformed per-capita rate of
+        conversations with Claude. Countries with high access have AI tools
+        reaching a significant share of their population; countries with low
+        access have AI usage concentrated among a small number of users.
+      </p>
+
+      <h3>Agency: how productively people engage</h3>
+      <p>
+        Agency measures the quality of engagement once access exists. It is a
+        composite of four indicators: the proportion of conversations involving
+        active co-creation (task iteration, learning, and validation combined),
+        the proportion that are purely directive (inverted — lower is better),
+        the task success rate, and the education level of prompts. Countries
+        with high agency use AI as a collaborative tool; countries with low
+        agency tend toward passive or directive interaction patterns.
+      </p>
+
+      <h2>Four quadrants</h2>
+
+      <div class="quadrant-grid">
+        <div class="quadrant quadrant--full-empowerment">
+          <h3><span class="stage-badge stage-badge--full-empowerment">Full Empowerment</span></h3>
+          <p>High access, high agency. AI tools are broadly available and people engage with them productively. The aspirational quadrant.</p>
+        </div>
+        <div class="quadrant quadrant--passive-dependency">
+          <h3><span class="stage-badge stage-badge--passive-dependency">Passive Dependency</span></h3>
+          <p>High access, low agency. AI tools are widely available but usage patterns lean toward personal or directive interactions rather than productive co-creation.</p>
+        </div>
+        <div class="quadrant quadrant--elite-empowerment">
+          <h3><span class="stage-badge stage-badge--elite-empowerment">Elite Empowerment</span></h3>
+          <p>Low access, high agency. AI tools reach only a small share of the population, but those who use them engage productively — often for professional work.</p>
+        </div>
+        <div class="quadrant quadrant--full-dependency">
+          <h3><span class="stage-badge stage-badge--full-dependency">Full Dependency</span></h3>
+          <p>Low access, low agency. AI tools are neither broadly available nor productively used. Usage is often concentrated in coursework and education.</p>
+        </div>
+      </div>
+
+      <h2>Why it matters</h2>
+      <p>
+        Most discussions of the "AI divide" focus only on access — who has AI and
+        who doesn't. The AI Matrix shows this is half the picture. A country can
+        have widespread access but low agency (passive dependency), or limited
+        access but highly productive usage (elite empowerment). Effective AI
+        policy requires understanding both dimensions.
+      </p>
+      <p>
+        For the full methodology, including composite construction, threshold
+        rules, and data sources, see the <a href="/methodology">methodology page</a>.
+      </p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .page-content {
+    padding: var(--space-lg) 0;
+  }
+
+  .lede {
+    font-size: var(--text-h3);
+    color: var(--text-primary);
+    line-height: 1.5;
+    margin-bottom: var(--space-lg);
+  }
+
+  .quadrant-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+    margin: var(--space-md) 0 var(--space-lg);
+  }
+
+  .quadrant {
+    padding: var(--space-md);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  .quadrant h3 {
+    margin-bottom: var(--space-xs);
+  }
+
+  .quadrant p {
+    font-size: var(--text-small);
+  }
+
+  @media (max-width: 600px) {
+    .quadrant-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

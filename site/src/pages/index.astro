@@ -1,0 +1,71 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Dashboard">
+  <section class="hero">
+    <div class="container">
+      <div class="hero__header">
+        <h1>Global AI Adoption</h1>
+        <p class="hero__subtitle">
+          Where countries stand on access and agency — updated with each
+          Anthropic Economic Index release.
+        </p>
+      </div>
+      <div class="chart-container">
+        <div id="matrix-scatter" class="chart-placeholder">
+          <p>Loading chart...</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="container" style="margin-top: var(--space-lg);">
+    <div class="prose">
+      <h2>What you're looking at</h2>
+      <p>
+        Each dot is a country. The horizontal axis measures <strong>access</strong>
+        — how broadly AI tools reach the population (log per-capita conversations
+        with Claude). The vertical axis measures <strong>agency</strong> — how
+        productively people engage once they have access (a composite of co-creation
+        rate, task success, and interaction patterns).
+      </p>
+      <p>
+        The intersection places each country in one of four quadrants.
+        <a href="/framework">Learn about the framework &rarr;</a>
+      </p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero {
+    padding: var(--space-lg) 0 var(--space-md);
+  }
+
+  .hero__header {
+    text-align: center;
+    margin-bottom: var(--space-lg);
+  }
+
+  .hero__subtitle {
+    font-size: var(--text-h3);
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .chart-placeholder {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--text-small);
+  }
+</style>

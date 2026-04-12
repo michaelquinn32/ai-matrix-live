@@ -1,0 +1,251 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Methodology" description="How the AI Matrix scores are computed: agency composite, access calculation, and stage assignment.">
+  <section class="container page-content">
+    <div class="prose">
+      <h1>Methodology</h1>
+
+      <p class="lede">
+        This page documents how the AI Matrix scores are computed. The methodology
+        replicates
+        <a href="https://doi.org/10.2139/ssrn.5228571" target="_blank" rel="noopener">Simpson (2025)</a>.
+        All code is open source in the
+        <a href="https://github.com/michaelquinn32/ai-matrix-live/tree/main/pipeline" target="_blank" rel="noopener">pipeline directory</a>.
+      </p>
+
+      <h2>Data source</h2>
+      <p>
+        The <a href="https://huggingface.co/datasets/Anthropic/EconomicIndex" target="_blank" rel="noopener">Anthropic Economic Index</a>
+        is published roughly quarterly on HuggingFace. Each release contains
+        country-level data on Claude usage patterns collected over a one-week
+        sampling window: conversation counts, collaboration patterns, task
+        success rates, use case classifications, and education-level estimates.
+      </p>
+      <p>
+        Countries are included when they have at least 200 conversations in the
+        sampling window. Population data for per-capita calculations comes from
+        the World Bank Open Data API.
+      </p>
+
+      <h2>Agency composite</h2>
+      <p>
+        The agency score is the mean of up to four min-max normalised components:
+      </p>
+      <ol>
+        <li><strong>Co-creation rate</strong> — the sum of task iteration, learning, and validation proportions among all conversations. Higher co-creation indicates more productive human-AI collaboration.</li>
+        <li><strong>Directive rate (inverted)</strong> — the proportion of purely directive conversations, inverted so that lower directive usage yields a higher agency score.</li>
+        <li><strong>Task success rate</strong> — the proportion of conversations classified as successful.</li>
+        <li><strong>Prompt education level</strong> — the mean education-years estimate of prompt content.</li>
+      </ol>
+      <p>
+        Each component is min-max normalised across all countries in the release
+        to a [0, 1] range. The composite is the arithmetic mean. When a component
+        is not available in a release (see <a href="#variable-availability">variable availability</a>),
+        it is excluded from the average.
+      </p>
+
+      <h2>Access score</h2>
+      <p>
+        Access is calculated as:
+      </p>
+      <pre><code>access = log₁₀(usage_count / population)</code></pre>
+      <p>
+        The log transform compresses the right-skewed distribution of per-capita
+        usage rates, making the scatter plot readable across several orders of
+        magnitude.
+      </p>
+
+      <h2>Stage assignment</h2>
+      <p>
+        Countries are assigned to stages using sequential threshold rules applied
+        to use-case share data. The rules are applied in order; the first match wins:
+      </p>
+      <ol>
+        <li><strong>Stage 1 (Full Dependency)</strong> — coursework share &gt; 30%</li>
+        <li><strong>Stage 2 (Elite Empowerment)</strong> — work share &gt; 48% AND coursework share &lt; 25%</li>
+        <li><strong>Stage 3 (Passive Dependency)</strong> — personal share &gt; 38%</li>
+        <li><strong>Residual</strong> — classified by agency composite score: &ge; 0.55 → Stage 2; &ge; 0.42 → Stage 3; otherwise Stage 1</li>
+      </ol>
+      <p>
+        When use-case data is not available (as in the September 2025 release),
+        all countries are classified using the residual agency-score rules.
+      </p>
+
+      <h2 id="variable-availability">Variable availability by release</h2>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Sep 2025</th>
+              <th>Jan 2026</th>
+              <th>Mar 2026</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Collaboration patterns</td>
+              <td class="available">Yes</td>
+              <td class="available">Yes</td>
+              <td class="available">Yes</td>
+            </tr>
+            <tr>
+              <td>Task success rate</td>
+              <td class="missing">No</td>
+              <td class="available">Yes</td>
+              <td class="available">Yes</td>
+            </tr>
+            <tr>
+              <td>Use case shares</td>
+              <td class="missing">No</td>
+              <td class="available">Yes</td>
+              <td class="available">Yes</td>
+            </tr>
+            <tr>
+              <td>Education level</td>
+              <td class="missing">No</td>
+              <td class="available">Yes</td>
+              <td class="missing">No</td>
+            </tr>
+            <tr>
+              <td>Agency components used</td>
+              <td>2 of 4</td>
+              <td>4 of 4</td>
+              <td>3 of 4</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Limitations</h2>
+      <ul>
+        <li><strong>Single-platform data.</strong> The AEI captures Claude usage only, not all AI tools. Countries with high adoption of other tools (e.g., ChatGPT, Gemini) may appear to have lower access than their actual AI engagement warrants.</li>
+        <li><strong>Selection bias.</strong> Claude's user base skews toward English-speaking, higher-income populations. This likely inflates access scores for Anglophone countries and depresses them for countries where other AI tools dominate.</li>
+        <li><strong>One-week sampling window.</strong> Each release captures a single week of usage, which may not be representative of longer-term patterns.</li>
+        <li><strong>Threshold sensitivity.</strong> The stage assignment rules use fixed thresholds from the companion paper. Small changes in these thresholds can shift individual countries between stages.</li>
+        <li><strong>Variable availability varies.</strong> Earlier releases have fewer agency components, making cross-wave comparisons less precise.</li>
+      </ul>
+
+      <h2>Citation</h2>
+      <p>If you use this data or methodology, please cite:</p>
+      <div class="citation-block">
+        <p>
+          Simpson, E. (2025). Decomposing the Capability Overhang: Access, Agency,
+          and the Geography of AI Adoption. SSRN.
+          <a href="https://doi.org/10.2139/ssrn.5228571" target="_blank" rel="noopener">https://doi.org/10.2139/ssrn.5228571</a>
+        </p>
+      </div>
+      <details>
+        <summary>BibTeX</summary>
+        <pre><code>@article&#123;simpson2025decomposing,
+  title=&#123;Decomposing the Capability Overhang: Access, Agency,
+         and the Geography of AI Adoption&#125;,
+  author=&#123;Simpson, Ewan&#125;,
+  year=&#123;2025&#125;,
+  journal=&#123;SSRN&#125;,
+  doi=&#123;10.2139/ssrn.5228571&#125;
+&#125;</code></pre>
+      </details>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .page-content {
+    padding: var(--space-lg) 0;
+  }
+
+  .lede {
+    font-size: var(--text-h3);
+    color: var(--text-primary);
+    line-height: 1.5;
+    margin-bottom: var(--space-lg);
+  }
+
+  ol, ul {
+    margin: var(--space-sm) 0 var(--space-md) var(--space-md);
+    color: var(--text-secondary);
+  }
+
+  li {
+    margin-bottom: var(--space-xs);
+  }
+
+  pre {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: var(--space-sm) var(--space-md);
+    overflow-x: auto;
+    margin: var(--space-sm) 0 var(--space-md);
+  }
+
+  code {
+    color: var(--accent);
+  }
+
+  pre code {
+    color: var(--text-primary);
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+    margin: var(--space-sm) 0 var(--space-md);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-small);
+  }
+
+  th, td {
+    padding: var(--space-xs) var(--space-sm);
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  th {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  td {
+    color: var(--text-secondary);
+  }
+
+  .available {
+    color: var(--stage-full-empowerment);
+  }
+
+  .missing {
+    color: var(--stage-full-dependency);
+  }
+
+  .citation-block {
+    background: var(--bg-surface);
+    border-left: 3px solid var(--accent);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: 0 6px 6px 0;
+    margin: var(--space-sm) 0;
+  }
+
+  .citation-block p {
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  details {
+    margin: var(--space-sm) 0 var(--space-md);
+  }
+
+  summary {
+    cursor: pointer;
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: var(--text-small);
+  }
+</style>

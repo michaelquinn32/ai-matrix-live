@@ -6,3 +6,8 @@ dist/
 build/
 notebooks/__marimo__/
 .local/
+
+# Astro / Node
+site/node_modules/
+site/dist/
+site/.astro/

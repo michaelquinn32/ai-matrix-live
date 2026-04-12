@@ -1,0 +1,203 @@
+/* AI Matrix Live — Design System
+ * Based on research from issue #11: Okabe-Ito stage colors,
+ * o16g-inspired dark theme, Instrument + JetBrains Mono typography.
+ */
+
+/* ------------------------------------------------------------------ */
+/* Fonts                                                               */
+/* ------------------------------------------------------------------ */
+
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ------------------------------------------------------------------ */
+/* Design tokens                                                       */
+/* ------------------------------------------------------------------ */
+
+:root {
+  /* Stage colors (Okabe-Ito derived, colorblind-safe) */
+  --stage-full-empowerment: #56B4E9;   /* Sky blue — high access, high agency */
+  --stage-elite-empowerment: #E69F00;  /* Amber — low access, high agency */
+  --stage-passive-dependency: #0072B2; /* Deep blue — high access, low agency */
+  --stage-full-dependency: #D55E00;    /* Vermillion — low access, low agency */
+
+  /* Accent */
+  --accent: #0ea5c9;
+
+  /* Typography */
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-body: 'Instrument Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Sizing (fluid) */
+  --text-hero: clamp(36px, 6vw, 72px);
+  --text-h1: clamp(28px, 4vw, 48px);
+  --text-h2: clamp(22px, 3vw, 32px);
+  --text-h3: clamp(18px, 2vw, 24px);
+  --text-body: clamp(15px, 1.4vw, 18px);
+  --text-small: clamp(12px, 1.1vw, 14px);
+  --text-mono: clamp(11px, 1vw, 13px);
+
+  /* Spacing */
+  --space-xs: clamp(4px, 0.5vw, 8px);
+  --space-sm: clamp(8px, 1vw, 16px);
+  --space-md: clamp(16px, 2vw, 32px);
+  --space-lg: clamp(32px, 4vw, 64px);
+  --space-xl: clamp(48px, 6vw, 96px);
+
+  /* Layout */
+  --max-width-prose: 800px;
+  --max-width-chart: 1100px;
+  --max-width-page: 1200px;
+  --padding-page: clamp(24px, 4vw, 60px);
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+}
+
+/* ------------------------------------------------------------------ */
+/* Dark theme (default)                                                */
+/* ------------------------------------------------------------------ */
+
+:root {
+  --bg: #0f1014;
+  --bg-surface: #16171c;
+  --bg-elevated: #1e1f26;
+  --text-primary: rgba(235, 230, 220, 0.85);
+  --text-secondary: rgba(235, 230, 220, 0.55);
+  --text-muted: rgba(235, 230, 220, 0.35);
+  --border: rgba(235, 230, 220, 0.1);
+  --border-strong: rgba(235, 230, 220, 0.2);
+  color-scheme: dark;
+}
+
+/* ------------------------------------------------------------------ */
+/* Light theme                                                         */
+/* ------------------------------------------------------------------ */
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #fafaf8;
+    --bg-surface: #ffffff;
+    --bg-elevated: #f0f0ee;
+    --text-primary: rgba(15, 16, 20, 0.87);
+    --text-secondary: rgba(15, 16, 20, 0.55);
+    --text-muted: rgba(15, 16, 20, 0.35);
+    --border: rgba(15, 16, 20, 0.1);
+    --border-strong: rgba(15, 16, 20, 0.2);
+    --accent: #0072B2;
+    color-scheme: light;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Reset & base                                                        */
+/* ------------------------------------------------------------------ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: 1.6;
+  color: var(--text-primary);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+}
+
+/* ------------------------------------------------------------------ */
+/* Typography                                                          */
+/* ------------------------------------------------------------------ */
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+h1 { font-size: var(--text-h1); margin-bottom: var(--space-md); }
+h2 { font-size: var(--text-h2); margin-bottom: var(--space-sm); }
+h3 { font-size: var(--text-h3); margin-bottom: var(--space-xs); }
+
+p {
+  margin-bottom: var(--space-sm);
+  color: var(--text-secondary);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: opacity var(--transition-fast);
+}
+
+a:hover {
+  opacity: 0.8;
+}
+
+code, pre {
+  font-family: var(--font-mono);
+  font-size: var(--text-mono);
+}
+
+/* ------------------------------------------------------------------ */
+/* Layout utilities                                                    */
+/* ------------------------------------------------------------------ */
+
+.container {
+  max-width: var(--max-width-page);
+  margin: 0 auto;
+  padding: 0 var(--padding-page);
+}
+
+.prose {
+  max-width: var(--max-width-prose);
+}
+
+.chart-container {
+  max-width: var(--max-width-chart);
+  margin: 0 auto;
+}
+
+/* ------------------------------------------------------------------ */
+/* Stage badges                                                        */
+/* ------------------------------------------------------------------ */
+
+.stage-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  font-weight: 500;
+}
+
+.stage-badge::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.stage-badge--full-empowerment { color: var(--stage-full-empowerment); }
+.stage-badge--full-empowerment::before { background: var(--stage-full-empowerment); }
+
+.stage-badge--elite-empowerment { color: var(--stage-elite-empowerment); }
+.stage-badge--elite-empowerment::before { background: var(--stage-elite-empowerment); }
+
+.stage-badge--passive-dependency { color: var(--stage-passive-dependency); }
+.stage-badge--passive-dependency::before { background: var(--stage-passive-dependency); }
+
+.stage-badge--full-dependency { color: var(--stage-full-dependency); }
+.stage-badge--full-dependency::before { background: var(--stage-full-dependency); }

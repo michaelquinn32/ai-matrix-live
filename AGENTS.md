@@ -20,22 +20,34 @@ Cloudflare Pages site. Deploys automatically on push to `main`.
 
 ## Commands
 
-- Install deps: `uv sync`
+- Install Python deps: `uv sync`
+- Install site deps: `npm install` (from `site/`)
 - Run pipeline: `uv run python pipeline/run.py`
 - Run notebooks: `uv run marimo edit <notebook.py>`
-- Serve site locally: `uv run python -m http.server 8000 --directory docs`
+- Dev server: `npm run dev` (from `site/`)
+- Build site: `npm run build` (from `site/`, outputs to `site/dist/`)
 
 ## STOP List
 
-- Do NOT use frameworks or build tools for the website — plain HTML, CSS, JS only
 - Do NOT hardcode AEI release folder names — detect dynamically from HuggingFace
 - Do NOT commit to `main` without permission — this repo auto-deploys via Cloudflare Pages
+- Do NOT commit without a linked GitHub issue — every commit references an issue number
 - Do NOT install Python packages globally — use `uv`
 - Do NOT use Jupyter notebooks — use marimo (`*.py` notebooks) for all interactive work
 - Do NOT modify the methodology (thresholds, composite formula) without discussion — these replicate a published paper
 
+## Project Structure
+
+- `pipeline/` — Python data pipeline and methodology module
+- `notebooks/` — Marimo notebooks for exploration
+- `site/` — Astro static site (HTML, CSS, JS)
+- `site/public/data/` — JSON output consumed by the site
+- `site/src/pages/` — Astro pages (index, framework, methodology, updates)
+- `site/src/layouts/` — Shared layout (nav, footer)
+- `site/src/styles/` — Global CSS design system
+
 ## Verification
 
-1. Pipeline produces valid JSON: `python -c "import json; json.load(open('docs/data/countries.json')); json.load(open('docs/data/waves.json'))"`
-2. Site loads without errors: serve locally, check browser console
+1. Pipeline produces valid JSON: `python -c "import json; json.load(open('site/public/data/countries.json')); json.load(open('site/public/data/waves.json'))"`
+2. Site builds: `npm run build` (from `site/`) exits cleanly
 3. All countries have required fields: `name`, `iso3`, `stage`, `access`, `agency`
