@@ -4,12 +4,14 @@ import Base from '../layouts/Base.astro';
 
 <Base title="Explore" description="Explore individual country metrics across AI Matrix releases.">
   <section class="container page-content">
-    <h1>AI Adoption by Country</h1>
-    <p class="lede">
-      The AI Matrix tracks how countries move between four quadrants as AI
-      adoption patterns shift. Press play to see which countries changed
-      quadrant between releases.
-    </p>
+    <div class="hero__header">
+      <h1>AI Adoption by Country</h1>
+      <p class="hero__subtitle">
+        The AI Matrix tracks how countries move between four quadrants as AI
+        adoption patterns shift. Press play to see which countries changed
+        quadrant between releases.
+      </p>
+    </div>
 
     <div class="chart-container">
       <div class="chart-card">
@@ -156,12 +158,12 @@ import Base from '../layouts/Base.astro';
   });
 
   Plotly.newPlot('explore-map', buildMapData(waves[waves.length-1]), {
-    geo: { showframe:false, showcoastlines:false, showcountries:true, countrycolor:'rgba(235,230,220,0.08)',       showland:true, landcolor:'#1e1f26', showocean:true, oceancolor:'#16171c', bgcolor:'#16171c', showlakes:false, projection:{type:'natural earth'}, bgcolor:'#0f1014',
+    geo: { showframe:false, showcoastlines:false, showcountries:true, countrycolor:'rgba(235,230,220,0.08)', showland:true, landcolor:'#1e1f26', showocean:true, oceancolor:'#16171c', bgcolor:'#16171c', showlakes:false, projection:{type:'natural earth'},
       lataxis: { range: [-55, 80] },
     },
     plot_bgcolor:'#16171c', paper_bgcolor:'#16171c',
     font: { color:'rgba(240,237,230,0.95)', family:'Instrument Sans, system-ui, sans-serif' },
-    margin: { l:10, r:10, t:40, b:70 },
+    margin: { l:40, r:40, t:40, b:90 },
     annotations: [
       {x:0.01,y:1.06,xref:'paper',yref:'paper',showarrow:false,xanchor:'left',text:'<span style="color:#34d399">&#9679;</span> Full Empowerment',font:{family:'JetBrains Mono, monospace',size:11,color:'rgba(240,237,230,0.85)'}},
       {x:0.22,y:1.06,xref:'paper',yref:'paper',showarrow:false,xanchor:'left',text:'<span style="color:#fbbf24">&#9679;</span> Elite Empowerment',font:{family:'JetBrains Mono, monospace',size:11,color:'rgba(240,237,230,0.85)'}},
@@ -173,6 +175,7 @@ import Base from '../layouts/Base.astro';
     updatemenus: [{
       type:'buttons', showactive:false, x:0, y:-0.05, xanchor:'left', yanchor:'top', direction:'left', pad:{t:0,r:10},
       font:{family:'JetBrains Mono, monospace',size:11,color:'rgba(235,230,220,0.85)'},
+      bgcolor:'#1e1f26', bordercolor:'rgba(235,230,220,0.2)',
       buttons: [
         {label:'&#9654; Play',method:'animate',args:[null,{fromcurrent:true,frame:{duration:1500,redraw:true},transition:{duration:500},mode:'immediate'}]},
         {label:'&#9724; Pause',method:'animate',args:[[null],{mode:'immediate',frame:{duration:0,redraw:false},transition:{duration:0}}]},
@@ -348,19 +351,23 @@ import Base from '../layouts/Base.astro';
     padding: var(--space-lg) 0;
   }
 
-  .lede {
-    font-size: var(--text-h3);
-    color: var(--text-primary);
-    line-height: 1.5;
+  .hero__header {
+    text-align: center;
     margin-bottom: var(--space-lg);
-    max-width: var(--max-width-prose);
+  }
+
+  .hero__subtitle {
+    font-size: var(--text-h3);
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
   }
 
   .controls {
     margin-bottom: var(--space-md);
   }
 
-  .chart-card + h2 {
+  .chart-container + h2 {
     margin-top: var(--space-lg);
   }
 
