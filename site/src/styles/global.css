@@ -80,12 +80,17 @@
     --bg: #fafaf8;
     --bg-surface: #ffffff;
     --bg-elevated: #f0f0ee;
-    --text-primary: rgba(15, 16, 20, 0.87);
-    --text-secondary: rgba(15, 16, 20, 0.55);
-    --text-muted: rgba(15, 16, 20, 0.35);
+    --text-primary: rgba(15, 16, 20, 0.9);
+    --text-secondary: rgba(15, 16, 20, 0.65);
+    --text-muted: rgba(15, 16, 20, 0.45);
     --border: rgba(15, 16, 20, 0.1);
     --border-strong: rgba(15, 16, 20, 0.2);
-    --accent: #0072B2;
+    --accent: #005a8c;
+    /* Darker stage colors for light background contrast */
+    --stage-full-empowerment: #0d9668;
+    --stage-elite-empowerment: #b8860b;
+    --stage-passive-dependency: #1a5fb4;
+    --stage-full-dependency: #c53030;
     color-scheme: light;
   }
 }
@@ -166,6 +171,18 @@ code, pre {
 .chart-container {
   max-width: var(--max-width-chart);
   margin: 0 auto;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .chart-card {
