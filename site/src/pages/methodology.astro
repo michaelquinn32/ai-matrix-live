@@ -129,17 +129,22 @@ import Base from '../layouts/Base.astro';
 
       <h2>Papers</h2>
       <p>
-        The AI Matrix framework is developed across two papers. The first
-        introduces the conceptual framework (access vs agency, four quadrants).
-        The second operationalizes it with public data and validates the
-        bottleneck logic: adoption correlates most strongly with the weaker of
-        the two axes, not their average.
+        The AI Matrix framework is developed across two foundational papers.
+        Two further papers provide empirical support using the same data
+        sources this site draws from.
       </p>
+
+      <h3>Foundational</h3>
 
       <div class="citation-block">
         <p>
           Simpson, E. (2026). The AI Matrix as Diagnostic: Access, Agency, and Adoption. Zenodo.
           <a href="https://doi.org/10.5281/zenodo.18181372" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.18181372</a>
+        </p>
+        <p class="citation-note">
+          Introduces the conceptual framework: access vs agency, four quadrants,
+          and the bottleneck logic (adoption correlates most strongly with the
+          weaker axis).
         </p>
       </div>
 
@@ -148,6 +153,37 @@ import Base from '../layouts/Base.astro';
           Simpson, E. (2026). Decomposing the Capability Overhang: Access, Agency,
           and the Geography of AI Adoption. Zenodo.
           <a href="https://doi.org/10.5281/zenodo.19250306" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.19250306</a>
+        </p>
+        <p class="citation-note">
+          Operationalizes the framework with public data and validates the
+          bottleneck logic across 69 economies.
+        </p>
+      </div>
+
+      <h3>Supporting evidence</h3>
+
+      <div class="citation-block">
+        <p>
+          Simpson, E. (2026). The LLM Usage Gap: Evidence from Anthropic, Microsoft, and OpenAI. Zenodo.
+          <a href="https://doi.org/10.5281/zenodo.18322837" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.18322837</a>
+        </p>
+        <p class="citation-note">
+          Examines the gap between reported AI adoption rates and actual
+          intensity of use. Widespread nominal adoption coexists with shallow,
+          unmanaged use in most organizations.
+        </p>
+      </div>
+
+      <div class="citation-block">
+        <p>
+          Simpson, E. (2026). Beyond Adoption: Intensity and Integration as the Missing Link
+          in Firm-Level AI Impact. Zenodo.
+          <a href="https://doi.org/10.5281/zenodo.18845259" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.18845259</a>
+        </p>
+        <p class="citation-note">
+          Argues that adoption rates are the wrong unit of analysis. What matters
+          is intensity and depth of integration: the same distinction between
+          access and agency.
         </p>
       </div>
 
@@ -263,6 +299,12 @@ import Base from '../layouts/Base.astro';
   .citation-block p {
     color: var(--text-primary);
     margin: 0;
+  }
+
+  .citation-note {
+    color: var(--text-secondary) !important;
+    font-size: var(--text-small);
+    margin-top: 4px !important;
   }
 
   details {
