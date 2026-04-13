@@ -23,6 +23,10 @@ logger = logging.getLogger(__name__)
 # Minimum conversation count for a country to be included
 MIN_OBSERVATIONS = 200
 
+# Minimum population to exclude microstates where per-capita metrics are unreliable
+# (e.g., Seychelles with 120K population shows 20% per-capita usage from API traffic)
+MIN_POPULATION = 500_000
+
 # Stage assignment thresholds (Section 3.2 of the paper)
 COURSEWORK_STAGE1_THRESHOLD = 0.30
 WORK_STAGE2_THRESHOLD = 0.48
@@ -175,9 +179,7 @@ def compute_agency_composite(df: pd.DataFrame) -> pd.DataFrame:
 
     # 1. Co-creation (normalized)
     if "co_creation" in result.columns and result["co_creation"].notna().any():
-        result["norm_co_creation"] = _min_max_normalize(
-            result["co_creation"].fillna(0)
-        )
+        result["norm_co_creation"] = _min_max_normalize(result["co_creation"].fillna(0))
         components.append("norm_co_creation")
 
     # 2. Directive (inverted -- higher directive = lower agency)
@@ -188,7 +190,10 @@ def compute_agency_composite(df: pd.DataFrame) -> pd.DataFrame:
         components.append("norm_directive_inv")
 
     # 3. Task success rate
-    if "task_success_rate" in result.columns and result["task_success_rate"].notna().any():
+    if (
+        "task_success_rate" in result.columns
+        and result["task_success_rate"].notna().any()
+    ):
         result["norm_task_success"] = _min_max_normalize(
             result["task_success_rate"].fillna(0)
         )
@@ -435,9 +440,50 @@ def fetch_world_bank_population(year: int = 2023) -> pd.DataFrame:
         page += 1
 
     result = pd.DataFrame(all_records)
-    logger.info(
-        "Fetched population data for %d countries (year=%d)", len(result), year
-    )
+    logger.info("Fetched population data for %d countries (year=%d)", len(result), year)
+    return result
+
+
+def fetch_world_bank_country_metadata() -> pd.DataFrame:
+    """Fetch country region and income level from the World Bank API.
+
+    Returns:
+        DataFrame with columns: iso2, region, income_level.
+    """
+    import requests
+
+    url = "https://api.worldbank.org/v2/country?format=json&per_page=400"
+    all_records = []
+    page = 1
+    while True:
+        resp = requests.get(f"{url}&page={page}", timeout=30)
+        resp.raise_for_status()
+        data = resp.json()
+
+        if len(data) < 2 or not data[1]:
+            break
+
+        for record in data[1]:
+            region = record.get("region", {}).get("value", "")
+            income = record.get("incomeLevel", {}).get("value", "")
+            # Skip aggregates (region = "Aggregates")
+            if region and region != "Aggregates":
+                all_records.append(
+                    {
+                        "iso3": record["id"],
+                        "iso2": record.get("iso2Code", ""),
+                        "region": region,
+                        "income_level": income,
+                    }
+                )
+
+        total_pages = data[0].get("pages", 1)
+        if page >= total_pages:
+            break
+        page += 1
+
+    result = pd.DataFrame(all_records)
+    logger.info("Fetched metadata for %d countries", len(result))
     return result
 
 
@@ -481,6 +527,15 @@ def process_release(
 
     # Compute access score
     metrics = compute_access_score(metrics, population)
+
+    # Filter out microstates where per-capita metrics are unreliable
+    before = len(metrics)
+    metrics = metrics[
+        metrics["population"].isna() | (metrics["population"] >= MIN_POPULATION)
+    ].copy()
+    dropped = before - len(metrics)
+    if dropped > 0:
+        logger.info("Dropped %d microstates (population < %d)", dropped, MIN_POPULATION)
 
     # Assign stages
     metrics = assign_stages(metrics)

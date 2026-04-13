@@ -44,19 +44,28 @@ import Base from '../layouts/Base.astro';
   // Config
   // -----------------------------------------------------------------------
 
-  const STAGE_COLORS = {
-    'Full Dependency':    '#D55E00',
-    'Elite Empowerment':  '#E69F00',
-    'Passive Dependency': '#0072B2',
-    'Full Empowerment':   '#56B4E9',
+  // Region colors — designed for dark background, high contrast between groups
+  const REGION_COLORS = {
+    'East Asia & Pacific':       '#36b5d8',
+    'Europe & Central Asia':     '#a78bfa',
+    'Latin America & Caribbean': '#34d399',
+    'Middle East & North Africa':'#fbbf24',
+    'North America':             '#f87171',
+    'South Asia':                '#fb923c',
+    'Sub-Saharan Africa':        '#60a5fa',
   };
 
-  const STAGE_ORDER = [
-    'Full Empowerment',
-    'Elite Empowerment',
-    'Passive Dependency',
-    'Full Dependency',
-  ];
+  // Normalize region names (World Bank API has trailing spaces and long names)
+  function normalizeRegion(r) {
+    if (!r) return 'Other';
+    r = r.trim();
+    if (r.indexOf('Middle East') === 0) return 'Middle East & North Africa';
+    if (r.indexOf('Latin America') === 0) return 'Latin America & Caribbean';
+    if (r.indexOf('Sub-Saharan') === 0) return 'Sub-Saharan Africa';
+    return r;
+  }
+
+  const REGION_ORDER = Object.keys(REGION_COLORS);
 
   const RELEASE_LABELS = {
     '2025_09_15': 'Sep 2025',
@@ -90,61 +99,95 @@ import Base from '../layouts/Base.astro';
   // Build frames
   // -----------------------------------------------------------------------
 
-  // Helper: log-scale dot sizes from usage_count
-  function dotSize(usageCount) {
-    if (!usageCount || usageCount <= 0) return 4;
-    // log10 scale, clamped to reasonable range
-    const s = Math.log10(usageCount);
-    return Math.max(5, Math.min(40, s * 8));
+  // Dot size from population (log-scaled, Gapminder style)
+  function dotSize(population) {
+    if (!population || population <= 0) return 8;
+    var s = Math.log10(population);
+    // log10(500K)=5.7, log10(1.4B)=9.15 -> map to 8-50px range
+    return Math.max(8, Math.min(50, (s - 5) * 10));
+  }
+
+  // Compute per-wave medians
+  function waveMedians(wave) {
+    var xs = [], ys = [];
+    for (var i = 0; i < wave.countries.length; i++) {
+      var c = wave.countries[i];
+      if (c.access_score != null && c.agency_composite != null) {
+        xs.push(c.access_score);
+        ys.push(c.agency_composite);
+      }
+    }
+    xs.sort(function(a,b){return a-b;});
+    ys.sort(function(a,b){return a-b;});
+    return {
+      x: xs[Math.floor(xs.length/2)],
+      y: ys[Math.floor(ys.length/2)]
+    };
+  }
+
+  // Derive quadrant label from position relative to wave-specific medians
+  function quadrantLabel(access, agency, medX, medY) {
+    var highAccess = access >= medX;
+    var highAgency = agency >= medY;
+    if (highAccess && highAgency) return 'Full Empowerment';
+    if (!highAccess && highAgency) return 'Elite Empowerment';
+    if (highAccess && !highAgency) return 'Passive Dependency';
+    return 'Full Dependency';
   }
 
   function buildTraces(wave) {
-    // Group countries by stage for legend
-    const byStage = {};
-    for (const stage of STAGE_ORDER) {
-      byStage[stage] = [];
+    var wMed = waveMedians(wave);
+    // Group countries by region for legend coloring
+    var byRegion = {};
+    for (var i = 0; i < REGION_ORDER.length; i++) {
+      byRegion[REGION_ORDER[i]] = [];
     }
 
-    for (const c of wave.countries) {
+    for (var j = 0; j < wave.countries.length; j++) {
+      var c = wave.countries[j];
       if (c.access_score == null || c.agency_composite == null) continue;
-      const stage = c.stage_name || 'Full Dependency';
-      if (!byStage[stage]) byStage[stage] = [];
-      byStage[stage].push(c);
+      var region = normalizeRegion(c.region);
+      if (!byRegion[region]) byRegion[region] = [];
+      byRegion[region].push(c);
     }
 
-    return STAGE_ORDER.map(function (stage) {
-      const countries = byStage[stage] || [];
+    return REGION_ORDER.map(function (region) {
+      var countries = byRegion[region] || [];
       return {
         x: countries.map(function (c) { return c.access_score; }),
         y: countries.map(function (c) { return c.agency_composite; }),
         text: countries.map(function (c) { return c.country_name; }),
         customdata: countries.map(function (c) {
+          var pop = c.population || 0;
+          var popLabel = pop >= 1e9 ? (pop/1e9).toFixed(1) + 'B'
+                       : pop >= 1e6 ? (pop/1e6).toFixed(1) + 'M'
+                       : pop >= 1e3 ? (pop/1e3).toFixed(0) + 'K'
+                       : pop.toFixed(0);
+          var perCapita = pop > 0 ? (c.usage_count / pop * 1000000) : 0;
           return [
             c.iso3,
-            c.stage_name,
+            normalizeRegion(c.region),
+            popLabel,
+            perCapita.toFixed(0),
             c.usage_count,
-            c.stage_rule,
-            (c.co_creation != null ? (c.co_creation * 100).toFixed(1) + '%' : 'N/A'),
-            (c.task_success_rate != null ? (c.task_success_rate * 100).toFixed(1) + '%' : 'N/A'),
+            (c.co_creation != null ? (c.co_creation * 100).toFixed(0) + '%' : ''),
+            (c.task_success_rate != null ? (c.task_success_rate * 100).toFixed(0) + '%' : ''),
           ];
         }),
         marker: {
-          size: countries.map(function (c) { return dotSize(c.usage_count); }),
-          color: STAGE_COLORS[stage],
+          size: countries.map(function (c) { return dotSize(c.population); }),
+          color: REGION_COLORS[region] || '#888',
           opacity: 0.85,
-          line: { width: 1, color: 'rgba(255,255,255,0.2)' },
+          line: { width: 1, color: 'rgba(255,255,255,0.15)' },
         },
-        name: stage,
+        name: region,
         type: 'scatter',
         mode: 'markers',
         hovertemplate:
-          '<b>%{text}</b> (%{customdata[0]})<br>' +
-          'Stage: %{customdata[1]}<br>' +
-          'Access: %{x:.3f}<br>' +
-          'Agency: %{y:.3f}<br>' +
-          'Conversations: %{customdata[2]:,.0f}<br>' +
-          'Co-creation: %{customdata[4]}<br>' +
-          'Task success: %{customdata[5]}<br>' +
+          '<b>%{text}</b><br>' +
+          '%{customdata[1]}  Pop: %{customdata[2]}<br>' +
+          '%{customdata[3]} conversations per 1M people<br>' +
+          '%{customdata[4]:,.0f} total conversations' +
           '<extra></extra>',
       };
     });
@@ -178,9 +221,8 @@ import Base from '../layouts/Base.astro';
   }
   var xMin = Math.min.apply(null, allX), xMax = Math.max.apply(null, allX);
   var yMin = Math.min.apply(null, allY), yMax = Math.max.apply(null, allY);
-  var xPad = (xMax - xMin) * 0.05, yPad = (yMax - yMin) * 0.05;
 
-  // Medians for quadrant lines (from latest wave)
+  // Medians for quadrant crosshairs (from latest wave)
   var latestCountries = waves[waves.length - 1].countries.filter(function (c) {
     return c.access_score != null && c.agency_composite != null;
   });
@@ -188,6 +230,14 @@ import Base from '../layouts/Base.astro';
   var sortedY = latestCountries.map(function (c) { return c.agency_composite; }).sort(function (a, b) { return a - b; });
   var medianX = sortedX[Math.floor(sortedX.length / 2)];
   var medianY = sortedY[Math.floor(sortedY.length / 2)];
+
+  // Symmetric ranges around the median so the crosshairs sit at the visual center
+  var xSpread = Math.max(xMax - medianX, medianX - xMin) * 1.15;
+  var ySpread = Math.max(yMax - medianY, medianY - yMin) * 1.15;
+  var xRangeMin = medianX - xSpread;
+  var xRangeMax = medianX + xSpread;
+  var yRangeMin = medianY - ySpread;
+  var yRangeMax = medianY + ySpread;
 
   var sliderSteps = waves.map(function (wave, i) {
     var label = RELEASE_LABELS[wave.release] || wave.release;
@@ -207,74 +257,91 @@ import Base from '../layouts/Base.astro';
 
   var layout = {
     xaxis: {
-      title: { text: 'Access (log per-capita usage)', font: { family: 'JetBrains Mono, monospace', size: 12 } },
-      range: [xMin - xPad, xMax + xPad],
-      gridcolor: 'rgba(235,230,220,0.08)',
-      zerolinecolor: 'rgba(235,230,220,0.08)',
-      tickfont: { family: 'JetBrains Mono, monospace', size: 10, color: 'rgba(235,230,220,0.55)' },
+      title: { text: 'Access to AI Resources →', font: { family: 'Instrument Sans, system-ui, sans-serif', size: 13, color: 'rgba(235,230,220,0.5)' }, standoff: 15 },
+      range: [xRangeMin, xRangeMax],
+      showgrid: false,
+      showticklabels: false,
+      zeroline: false,
+      fixedrange: true,
     },
     yaxis: {
-      title: { text: 'Agency (composite score)', font: { family: 'JetBrains Mono, monospace', size: 12 } },
-      range: [yMin - yPad, yMax + yPad],
-      gridcolor: 'rgba(235,230,220,0.08)',
-      zerolinecolor: 'rgba(235,230,220,0.08)',
-      tickfont: { family: 'JetBrains Mono, monospace', size: 10, color: 'rgba(235,230,220,0.55)' },
+      title: { text: 'Human Agency →', font: { family: 'Instrument Sans, system-ui, sans-serif', size: 13, color: 'rgba(235,230,220,0.5)' }, standoff: 15 },
+      range: [yRangeMin, yRangeMax],
+      showgrid: false,
+      showticklabels: false,
+      zeroline: false,
+      fixedrange: true,
     },
     shapes: [
-      // Vertical quadrant line
-      { type: 'line', x0: medianX, x1: medianX, y0: yMin - yPad, y1: yMax + yPad,
-        line: { color: 'rgba(235,230,220,0.15)', width: 1, dash: 'dash' } },
-      // Horizontal quadrant line
-      { type: 'line', x0: xMin - xPad, x1: xMax + xPad, y0: medianY, y1: medianY,
-        line: { color: 'rgba(235,230,220,0.15)', width: 1, dash: 'dash' } },
+      // Quadrant background rectangles (matching the paper's Figure 1)
+      // Top-right: Full Empowerment (green tint)
+      { type: 'rect', x0: medianX, x1: xRangeMax, y0: medianY, y1: yRangeMax,
+        fillcolor: 'rgba(52,211,153,0.04)', line: { width: 0 }, layer: 'below' },
+      // Top-left: Elite Empowerment (amber tint)
+      { type: 'rect', x0: xRangeMin, x1: medianX, y0: medianY, y1: yRangeMax,
+        fillcolor: 'rgba(251,191,36,0.04)', line: { width: 0 }, layer: 'below' },
+      // Bottom-right: Passive Dependency (cool blue tint)
+      { type: 'rect', x0: medianX, x1: xRangeMax, y0: yRangeMin, y1: medianY,
+        fillcolor: 'rgba(96,165,250,0.04)', line: { width: 0 }, layer: 'below' },
+      // Bottom-left: Full Dependency (red tint)
+      { type: 'rect', x0: xRangeMin, x1: medianX, y0: yRangeMin, y1: medianY,
+        fillcolor: 'rgba(248,113,113,0.05)', line: { width: 0 }, layer: 'below' },
+      // Crosshair lines at median
+      { type: 'line', x0: medianX, x1: medianX, y0: yRangeMin, y1: yRangeMax,
+        line: { color: 'rgba(235,230,220,0.15)', width: 1 } },
+      { type: 'line', x0: xRangeMin, x1: xRangeMax, y0: medianY, y1: medianY,
+        line: { color: 'rgba(235,230,220,0.15)', width: 1 } },
     ],
     annotations: [
-      // Quadrant labels — placed in the four corners of the plot area
-      // The AI Matrix maps: x = access (low→high), y = agency (low→high)
-      { x: xMax + xPad * 0.5, y: yMax + yPad * 0.5, text: 'Full<br>Empowerment', showarrow: false,
-        font: { family: 'Instrument Serif, serif', size: 14, color: 'rgba(86,180,233,0.3)' },
-        xanchor: 'right', yanchor: 'top' },
-      { x: xMax + xPad * 0.5, y: yMin - yPad * 0.5, text: 'Passive<br>Dependency', showarrow: false,
-        font: { family: 'Instrument Serif, serif', size: 14, color: 'rgba(0,114,178,0.3)' },
-        xanchor: 'right', yanchor: 'bottom' },
-      { x: xMin - xPad * 0.5, y: yMax + yPad * 0.5, text: 'Elite<br>Empowerment', showarrow: false,
-        font: { family: 'Instrument Serif, serif', size: 14, color: 'rgba(230,159,0,0.3)' },
-        xanchor: 'left', yanchor: 'top' },
-      { x: xMin - xPad * 0.5, y: yMin - yPad * 0.5, text: 'Full<br>Dependency', showarrow: false,
-        font: { family: 'Instrument Serif, serif', size: 14, color: 'rgba(213,94,0,0.3)' },
-        xanchor: 'left', yanchor: 'bottom' },
-      // Axis concept labels
-      { x: medianX, y: yMax + yPad * 0.5, text: 'Access →', showarrow: false,
-        font: { family: 'JetBrains Mono, monospace', size: 10, color: 'rgba(235,230,220,0.2)' },
-        xanchor: 'center', yanchor: 'top' },
-      { x: xMin - xPad * 0.5, y: medianY, text: 'Agency →', showarrow: false, textangle: -90,
-        font: { family: 'JetBrains Mono, monospace', size: 10, color: 'rgba(235,230,220,0.2)' },
-        xanchor: 'right', yanchor: 'middle' },
+      // Quadrant labels centered in each quadrant
+      { x: xRangeMax, y: yRangeMax,
+        text: '1. Full Empowerment', showarrow: false,
+        font: { family: 'Instrument Serif, serif', size: 13, color: 'rgba(52,211,153,0.35)' },
+        xanchor: 'right', yanchor: 'top', xshift: -8, yshift: -8 },
+      { x: xRangeMin, y: yRangeMax,
+        text: '2. Elite Empowerment', showarrow: false,
+        font: { family: 'Instrument Serif, serif', size: 13, color: 'rgba(251,191,36,0.35)' },
+        xanchor: 'left', yanchor: 'top', xshift: 8, yshift: -8 },
+      { x: xRangeMax, y: yRangeMin,
+        text: '3. Passive Dependency', showarrow: false,
+        font: { family: 'Instrument Serif, serif', size: 13, color: 'rgba(96,165,250,0.35)' },
+        xanchor: 'right', yanchor: 'bottom', xshift: -8, yshift: 8 },
+      { x: xRangeMin, y: yRangeMin,
+        text: '4. Full Dependency', showarrow: false,
+        font: { family: 'Instrument Serif, serif', size: 13, color: 'rgba(248,113,113,0.35)' },
+        xanchor: 'left', yanchor: 'bottom', xshift: 8, yshift: 8 },
     ],
     plot_bgcolor: '#0f1014',
     paper_bgcolor: '#0f1014',
     font: { color: 'rgba(235,230,220,0.85)', family: 'Instrument Sans, system-ui, sans-serif' },
+    hoverlabel: {
+      font: { family: 'JetBrains Mono, monospace', size: 12, color: '#f0ede6' },
+      bgcolor: 'rgba(10,10,14,0.95)',
+      bordercolor: 'rgba(235,230,220,0.3)',
+      align: 'left',
+    },
     legend: {
       orientation: 'h',
       yanchor: 'bottom',
       y: 1.02,
       xanchor: 'center',
       x: 0.5,
-      font: { size: 12 },
+      font: { size: 12, family: 'JetBrains Mono, monospace' },
     },
-    margin: { l: 60, r: 30, t: 40, b: 60 },
+    margin: { l: 40, r: 40, t: 40, b: 80 },
     hovermode: 'closest',
 
     // Animation controls
     updatemenus: [{
       type: 'buttons',
       showactive: false,
-      x: 0.05,
+      x: 0,
       y: -0.12,
       xanchor: 'left',
       yanchor: 'top',
       direction: 'left',
       pad: { t: 0, r: 10 },
+      font: { family: 'JetBrains Mono, monospace', size: 11, color: 'rgba(235,230,220,0.85)' },
       buttons: [
         {
           label: '&#9654; Play',
@@ -307,8 +374,8 @@ import Base from '../layouts/Base.astro';
     sliders: [{
       active: 0,
       pad: { t: 30, b: 10 },
-      x: 0.15,
-      len: 0.85,
+      x: 0,
+      len: 1.0,
       xanchor: 'left',
       y: -0.12,
       yanchor: 'top',
@@ -329,15 +396,9 @@ import Base from '../layouts/Base.astro';
 
   var config = {
     responsive: true,
-    displayModeBar: true,
-    modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d'],
-    displaylogo: false,
-    toImageButtonOptions: {
-      format: 'svg',
-      filename: 'ai-matrix-live',
-      width: 1200,
-      height: 750,
-    },
+    displayModeBar: false,
+    staticPlot: false,
+    scrollZoom: false,
   };
 
   Plotly.newPlot('matrix-scatter', initialTraces, layout, config).then(function () {

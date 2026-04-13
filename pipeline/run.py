@@ -23,6 +23,7 @@ import pandas as pd
 from huggingface_hub import list_repo_tree
 
 from pipeline.methodology import (
+    fetch_world_bank_country_metadata,
     fetch_world_bank_population,
     process_release,
 )
@@ -149,6 +150,8 @@ COUNTRY_FIELDS = [
     "iso3",
     "country_name",
     "geo_id",
+    "region",
+    "income_level",
     "stage",
     "stage_name",
     "stage_rule",
@@ -294,8 +297,19 @@ def main() -> int:
     )
     all_paths = {item.path for item in all_items}
 
-    # Fetch population data
+    # Fetch population data and country metadata (region, income level)
     population = get_population()
+    metadata_cache_path = CACHE_DIR / "country_metadata.json"
+    try:
+        country_meta = fetch_world_bank_country_metadata()
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        country_meta.to_json(metadata_cache_path, orient="records", indent=2)
+    except Exception:
+        logger.warning("World Bank metadata API failed, falling back to cache")
+        if metadata_cache_path.exists():
+            country_meta = pd.read_json(metadata_cache_path, orient="records")
+        else:
+            country_meta = pd.DataFrame(columns=["iso2", "region", "income_level"])
 
     # Process each release
     all_wave_data: dict[str, list[dict]] = {}
@@ -334,6 +348,19 @@ def main() -> int:
 
         # Process
         results = process_release(raw_df, population, release_id)
+
+        # Join region and income level metadata (by geo_id = ISO-2)
+        if len(country_meta) > 0 and "iso2" in country_meta.columns:
+            results = results.merge(
+                country_meta[["iso2", "region", "income_level"]],
+                left_on="geo_id",
+                right_on="iso2",
+                how="left",
+            )
+            if "iso2_y" in results.columns:
+                results = results.drop(columns=["iso2_y"])
+            elif "iso2" in results.columns and "geo_id" in results.columns:
+                results = results.drop(columns=["iso2"])
 
         # Determine which agency components were available
         agency_components = [c for c in results.columns if c.startswith("norm_")]
