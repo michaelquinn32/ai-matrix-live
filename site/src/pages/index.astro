@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro';
 ---
 
-<Base title="Dashboard">
+<Base title="Home">
   <section class="hero">
     <div class="container">
       <div class="hero__header">
@@ -22,7 +22,7 @@ import Base from '../layouts/Base.astro';
   <section class="explainer">
     <div class="container">
       <div class="chart-container">
-        <h2>What you're looking at</h2>
+        <h2>The AI Matrix</h2>
         <p>
           Each dot is a country. The horizontal axis measures <strong>access</strong>:
           how many people per capita are using Claude. The vertical axis measures
@@ -30,10 +30,33 @@ import Base from '../layouts/Base.astro';
           issue commands. Bigger dots mean larger populations.
         </p>
         <p>
-          Press play to watch countries shift between releases. Colors show
-          world regions. The quadrant backgrounds show the four AI Matrix stages.
-          <a href="/framework">Learn about the framework &rarr;</a>
+          The four quadrant backgrounds correspond to the AI Matrix framework.
+          Countries above the median on both axes sit in <strong>Full Empowerment</strong>.
+          Countries below both sit in <strong>Full Dependency</strong>. The other
+          two quadrants capture the mismatch: high access with low agency
+          (<strong>Passive Dependency</strong>) or high agency with low access
+          (<strong>Elite Empowerment</strong>). Press play to watch countries
+          shift between releases.
         </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="container">
+      <div class="cta__grid">
+        <a href="/explore" class="cta__card">
+          <h3>Explore countries</h3>
+          <p>Select a country and see its metrics change across releases.</p>
+        </a>
+        <a href="/framework" class="cta__card">
+          <h3>The framework</h3>
+          <p>What access and agency mean, and why the four quadrants matter.</p>
+        </a>
+        <a href="/methodology" class="cta__card">
+          <h3>Methodology</h3>
+          <p>How the scores are computed, with full source code and citations.</p>
+        </a>
       </div>
     </div>
   </section>
@@ -418,6 +441,8 @@ import Base from '../layouts/Base.astro';
 })();
 </script>
 
+
+
 <style>
   .hero {
     padding: var(--space-lg) 0 var(--space-md);
@@ -445,6 +470,57 @@ import Base from '../layouts/Base.astro';
 
   .explainer {
     margin-top: var(--space-lg);
+  }
+
+
+  .cta {
+    margin-top: var(--space-xl);
+  }
+
+  .cta__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-md);
+  }
+
+  .cta__card {
+    display: block;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: var(--space-md);
+    text-decoration: none;
+    transition: border-color var(--transition-fast), background var(--transition-fast);
+  }
+
+  .cta__card:hover {
+    border-color: var(--accent);
+    background: var(--bg-elevated);
+    opacity: 1;
+  }
+
+  .cta__card h3 {
+    font-family: var(--font-display);
+    font-size: var(--text-h3);
+    color: var(--text-primary);
+    margin-bottom: var(--space-xs);
+  }
+
+  .cta__card p {
+    font-size: var(--text-small);
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  @media (max-width: 600px) {
+    .cta__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  #world-map {
+    width: 100%;
+    min-height: 500px;
   }
 
   #matrix-scatter {

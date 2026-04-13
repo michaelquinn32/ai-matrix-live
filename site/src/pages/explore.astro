@@ -1,0 +1,469 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Explore" description="Explore individual country metrics across AI Matrix releases.">
+  <section class="container page-content">
+    <h1>AI Adoption by Country</h1>
+    <p class="lede">
+      The AI Matrix tracks how countries move between four quadrants as AI
+      adoption patterns shift. Press play to see which countries changed
+      quadrant between releases.
+    </p>
+
+    <div class="chart-container">
+      <div id="explore-map"></div>
+    </div>
+
+    <h2>Country Explorer</h2>
+    <p>
+      Select a country to see how its metrics have changed across Anthropic
+      Economic Index releases. Click a country on the map or use the dropdown.
+    </p>
+
+    <div class="controls">
+      <select id="country-select">
+        <option value="">Select a country...</option>
+      </select>
+    </div>
+
+    <div id="country-summary" class="country-summary" style="display:none;">
+      <div class="summary-cards">
+        <div class="summary-card" id="card-quadrant"></div>
+        <div class="summary-card" id="card-region"></div>
+        <div class="summary-card" id="card-population"></div>
+        <div class="summary-card" id="card-conversations"></div>
+      </div>
+    </div>
+
+    <div id="panels-intro" class="panels-intro" style="display:none;">
+      <h2>How this country uses AI</h2>
+      <p>
+        Four views of the same data. <strong>Access and Agency</strong> tracks
+        the two index scores across releases. <strong>Use Case Breakdown</strong>
+        shows what people use AI for: coursework, professional work, or personal
+        tasks. <strong>Collaboration Pattern</strong> measures whether interactions
+        are co-creative (iterating, learning, validating) or purely directive.
+        <strong>Task Success and Usage</strong> shows the task completion rate
+        alongside conversations per million people.
+      </p>
+    </div>
+    <div class="panels" id="panels" style="display:none;">
+      <div class="panel-row">
+        <div class="panel" id="panel-access-agency"></div>
+        <div class="panel" id="panel-usecase"></div>
+      </div>
+      <div class="panel-row">
+        <div class="panel" id="panel-collaboration"></div>
+        <div class="panel" id="panel-success"></div>
+      </div>
+    </div>
+
+    <div id="no-data" class="no-data" style="display:none;">
+      <p>No data available for this country across the selected releases.</p>
+    </div>
+  </section>
+</Base>
+
+<script is:inline src="https://cdn.plot.ly/plotly-2.35.3.min.js"></script>
+<script is:inline>
+(async function() {
+  var resp = await fetch('/data/waves.json');
+  var waves = await resp.json();
+  if (!waves || waves.length === 0) return;
+
+  var RELEASE_LABELS = {
+    '2025_09_15': 'Sep 2025',
+    '2026_01_15': 'Jan 2026',
+    '2026_03_24': 'Mar 2026',
+  };
+
+  // Build country list from all waves
+  var countryMap = {};
+  for (var w = 0; w < waves.length; w++) {
+    for (var c = 0; c < waves[w].countries.length; c++) {
+      var country = waves[w].countries[c];
+      if (country.iso3 && country.country_name) {
+        countryMap[country.iso3] = country.country_name;
+      }
+    }
+  }
+
+  var select = document.getElementById('country-select');
+  var sorted = Object.entries(countryMap).sort(function(a,b) { return a[1].localeCompare(b[1]); });
+  for (var i = 0; i < sorted.length; i++) {
+    var opt = document.createElement('option');
+    opt.value = sorted[i][0];
+    opt.textContent = sorted[i][1];
+    select.appendChild(opt);
+  }
+
+  // Quadrant helpers
+  var QUADRANT_COLORS = {
+    'Full Empowerment':   '#34d399',
+    'Elite Empowerment':  '#fbbf24',
+    'Passive Dependency': '#60a5fa',
+    'Full Dependency':    '#f87171',
+  };
+
+  function waveMedians(wave) {
+    var xs = [], ys = [];
+    for (var i = 0; i < wave.countries.length; i++) {
+      var c = wave.countries[i];
+      if (c.access_score != null && c.agency_composite != null) { xs.push(c.access_score); ys.push(c.agency_composite); }
+    }
+    xs.sort(function(a,b){return a-b}); ys.sort(function(a,b){return a-b});
+    return { x: xs[Math.floor(xs.length/2)], y: ys[Math.floor(ys.length/2)] };
+  }
+
+  function quadrantLabel(access, agency, medX, medY) {
+    if (access >= medX && agency >= medY) return 'Full Empowerment';
+    if (access < medX && agency >= medY) return 'Elite Empowerment';
+    if (access >= medX && agency < medY) return 'Passive Dependency';
+    return 'Full Dependency';
+  }
+
+  // Build animated choropleth map
+  var quadrants = ['Full Dependency', 'Passive Dependency', 'Elite Empowerment', 'Full Empowerment'];
+  var mapColorscale = [[0,'#f87171'],[0.25,'#f87171'],[0.25,'#60a5fa'],[0.5,'#60a5fa'],[0.5,'#fbbf24'],[0.75,'#fbbf24'],[0.75,'#34d399'],[1,'#34d399']];
+
+  function buildMapData(wave) {
+    var wMed = waveMedians(wave);
+    var iso3s = [], zvals = [], texts = [];
+    for (var i = 0; i < wave.countries.length; i++) {
+      var c = wave.countries[i];
+      if (!c.iso3 || c.access_score == null || c.agency_composite == null) continue;
+      var q = quadrantLabel(c.access_score, c.agency_composite, wMed.x, wMed.y);
+      iso3s.push(c.iso3);
+      zvals.push(quadrants.indexOf(q));
+      var pop = c.population || 0;
+      var popLabel = pop >= 1e9 ? (pop/1e9).toFixed(1)+'B' : pop >= 1e6 ? (pop/1e6).toFixed(1)+'M' : pop >= 1e3 ? (pop/1e3).toFixed(0)+'K' : '';
+      var perCapita = pop > 0 ? (c.usage_count / pop * 1000000).toFixed(0) : '?';
+      texts.push('<b>'+c.country_name+'</b><br>'+q+'<br>'+perCapita+' conversations per 1M<br>Pop: '+popLabel);
+    }
+    return [{ type:'choropleth', locations:iso3s, z:zvals, zmin:0, zmax:3, text:texts, hoverinfo:'text', colorscale:mapColorscale, marker:{line:{color:'rgba(235,230,220,0.1)',width:0.5}}, showscale:false, hoverlabel:{font:{family:'JetBrains Mono, monospace',size:12,color:'#f0ede6'},bgcolor:'rgba(10,10,14,0.95)',bordercolor:'rgba(235,230,220,0.3)'} }];
+  }
+
+  var mapFrames = waves.map(function(w) {
+    return { name: RELEASE_LABELS[w.release] || w.release, data: buildMapData(w) };
+  });
+  var mapSliderSteps = waves.map(function(w) {
+    var label = RELEASE_LABELS[w.release] || w.release;
+    return { method:'animate', label:label, args:[[label],{mode:'immediate',transition:{duration:500},frame:{duration:500,redraw:true}}] };
+  });
+
+  Plotly.newPlot('explore-map', buildMapData(waves[waves.length-1]), {
+    geo: { showframe:false, showcoastlines:false, showcountries:true, countrycolor:'rgba(235,230,220,0.08)', showland:true, landcolor:'#16171c', showocean:true, oceancolor:'#0f1014', showlakes:false, projection:{type:'natural earth'}, bgcolor:'#0f1014' },
+    plot_bgcolor:'#0f1014', paper_bgcolor:'#0f1014',
+    font: { color:'rgba(240,237,230,0.95)', family:'Instrument Sans, system-ui, sans-serif' },
+    margin: { l:0, r:0, t:50, b:60 },
+    annotations: [
+      {x:0.01,y:1.06,xref:'paper',yref:'paper',showarrow:false,xanchor:'left',text:'<span style="color:#34d399">&#9679;</span> Full Empowerment',font:{family:'JetBrains Mono, monospace',size:11,color:'rgba(240,237,230,0.85)'}},
+      {x:0.22,y:1.06,xref:'paper',yref:'paper',showarrow:false,xanchor:'left',text:'<span style="color:#fbbf24">&#9679;</span> Elite Empowerment',font:{family:'JetBrains Mono, monospace',size:11,color:'rgba(240,237,230,0.85)'}},
+      {x:0.43,y:1.06,xref:'paper',yref:'paper',showarrow:false,xanchor:'left',text:'<span style="color:#60a5fa">&#9679;</span> Passive Dependency',font:{family:'JetBrains Mono, monospace',size:11,color:'rgba(240,237,230,0.85)'}},
+      {x:0.65,y:1.06,xref:'paper',yref:'paper',showarrow:false,xanchor:'left',text:'<span style="color:#f87171">&#9679;</span> Full Dependency',font:{family:'JetBrains Mono, monospace',size:11,color:'rgba(240,237,230,0.85)'}},
+      {x:0.85,y:1.06,xref:'paper',yref:'paper',showarrow:false,xanchor:'left',text:'<span style="color:#333">&#9679;</span> No data',font:{family:'JetBrains Mono, monospace',size:11,color:'rgba(240,237,230,0.5)'}},
+    ],
+    hoverlabel: {font:{family:'JetBrains Mono, monospace',size:12,color:'#f0ede6'},bgcolor:'rgba(10,10,14,0.95)',bordercolor:'rgba(235,230,220,0.3)'},
+    updatemenus: [{
+      type:'buttons', showactive:false, x:0, y:-0.05, xanchor:'left', yanchor:'top', direction:'left', pad:{t:0,r:10},
+      font:{family:'JetBrains Mono, monospace',size:11,color:'rgba(235,230,220,0.85)'},
+      buttons: [
+        {label:'&#9654; Play',method:'animate',args:[null,{fromcurrent:true,frame:{duration:1500,redraw:true},transition:{duration:500},mode:'immediate'}]},
+        {label:'&#9724; Pause',method:'animate',args:[[null],{mode:'immediate',frame:{duration:0,redraw:false},transition:{duration:0}}]},
+      ],
+    }],
+    sliders: [{
+      active:waves.length-1, pad:{t:30,b:10}, x:0, len:1.0, xanchor:'left', y:-0.05, yanchor:'top',
+      currentvalue:{prefix:'Release: ',visible:true,xanchor:'center',font:{family:'JetBrains Mono, monospace',size:12,color:'rgba(235,230,220,0.85)'}},
+      transition:{duration:500}, steps:mapSliderSteps,
+    }],
+  }, {responsive:true, displayModeBar:false, scrollZoom:false}).then(function() {
+    Plotly.addFrames('explore-map', mapFrames);
+  });
+
+  // Wire map clicks to country select
+  document.getElementById('explore-map').on('plotly_click', function(eventData) {
+    if (eventData && eventData.points && eventData.points[0]) {
+      var iso3 = eventData.points[0].location;
+      if (iso3 && countryMap[iso3]) {
+        select.value = iso3;
+        window.location.hash = iso3;
+        renderCountry(iso3);
+      }
+    }
+  });
+
+  // Default country or hash
+  var defaultCountry = 'USA';
+  if (window.location.hash) {
+    var hash = window.location.hash.slice(1).toUpperCase();
+    if (countryMap[hash]) defaultCountry = hash;
+  }
+  select.value = defaultCountry;
+  renderCountry(defaultCountry);
+
+  select.addEventListener('change', function() {
+    var iso3 = this.value;
+    if (iso3) {
+      window.location.hash = iso3;
+      renderCountry(iso3);
+    }
+  });
+
+  function renderCountry(iso3) {
+    // Collect data across waves
+    var releases = [];
+    var data = [];
+    for (var w = 0; w < waves.length; w++) {
+      var label = RELEASE_LABELS[waves[w].release] || waves[w].release;
+      var found = null;
+      for (var c = 0; c < waves[w].countries.length; c++) {
+        if (waves[w].countries[c].iso3 === iso3) {
+          found = waves[w].countries[c];
+          break;
+        }
+      }
+      releases.push(label);
+      data.push(found);
+    }
+
+    var hasData = data.some(function(d) { return d !== null; });
+    document.getElementById('panels').style.display = hasData ? 'block' : 'none';
+    document.getElementById('panels-intro').style.display = hasData ? 'block' : 'none';
+    document.getElementById('country-summary').style.display = hasData ? 'block' : 'none';
+    document.getElementById('no-data').style.display = hasData ? 'none' : 'block';
+    if (!hasData) return;
+
+    // Summary cards (from latest available data)
+    var latest = null;
+    for (var i = data.length - 1; i >= 0; i--) {
+      if (data[i]) { latest = data[i]; break; }
+    }
+
+    // Compute quadrant from latest wave medians
+    var latestWave = waves[waves.length - 1];
+    var xs = [], ys = [];
+    for (var j = 0; j < latestWave.countries.length; j++) {
+      var cj = latestWave.countries[j];
+      if (cj.access_score != null && cj.agency_composite != null) {
+        xs.push(cj.access_score); ys.push(cj.agency_composite);
+      }
+    }
+    xs.sort(function(a,b){return a-b}); ys.sort(function(a,b){return a-b});
+    var medX = xs[Math.floor(xs.length/2)], medY = ys[Math.floor(ys.length/2)];
+    var q = 'Unknown';
+    if (latest && latest.access_score != null && latest.agency_composite != null) {
+      var ha = latest.access_score >= medX, hag = latest.agency_composite >= medY;
+      if (ha && hag) q = 'Full Empowerment';
+      else if (!ha && hag) q = 'Elite Empowerment';
+      else if (ha && !hag) q = 'Passive Dependency';
+      else q = 'Full Dependency';
+    }
+
+    var pop = latest.population || 0;
+    var popLabel = pop >= 1e9 ? (pop/1e9).toFixed(1) + 'B' : pop >= 1e6 ? (pop/1e6).toFixed(1) + 'M' : pop >= 1e3 ? (pop/1e3).toFixed(0) + 'K' : '';
+
+    document.getElementById('card-quadrant').innerHTML = '<span class="card-label">Quadrant</span><span class="card-value">' + q + '</span>';
+    document.getElementById('card-region').innerHTML = '<span class="card-label">Region</span><span class="card-value">' + (latest.region || '').replace(/,.*/, '') + '</span>';
+    document.getElementById('card-population').innerHTML = '<span class="card-label">Population</span><span class="card-value">' + popLabel + '</span>';
+    document.getElementById('card-conversations').innerHTML = '<span class="card-label">Conversations (latest)</span><span class="card-value">' + (latest.usage_count || 0).toLocaleString() + '</span>';
+
+    // Shared layout settings
+    var panelLayout = {
+      plot_bgcolor: '#16171c',
+      paper_bgcolor: '#16171c',
+      font: { color: 'rgba(240,237,230,0.95)', family: 'Instrument Sans, system-ui, sans-serif', size: 11 },
+      margin: { l: 55, r: 55, t: 40, b: 85 },
+      autosize: true,
+      xaxis: { tickfont: { family: 'JetBrains Mono, monospace', size: 10 }, gridcolor: 'rgba(235,230,220,0.06)' },
+      yaxis: { tickfont: { family: 'JetBrains Mono, monospace', size: 10 }, gridcolor: 'rgba(235,230,220,0.06)' },
+      hoverlabel: { font: { family: 'JetBrains Mono, monospace', size: 11, color: '#f0ede6' }, bgcolor: 'rgba(10,10,14,0.95)', bordercolor: 'rgba(235,230,220,0.3)' },
+    };
+    var panelConfig = { responsive: true, displayModeBar: false };
+
+    function val(d, field) { return d ? d[field] : null; }
+    function pct(d, field) { var v = val(d, field); return v != null ? +(v * 100).toFixed(1) : null; }
+
+    // Panel 1: Access and Agency scores over time
+    Plotly.newPlot('panel-access-agency', [
+      { x: releases, y: data.map(function(d) { return val(d, 'access_score'); }), name: 'Access', type: 'scatter', mode: 'lines+markers', line: { color: '#60a5fa', width: 2 }, marker: { size: 8 } },
+      { x: releases, y: data.map(function(d) { return val(d, 'agency_composite'); }), name: 'Agency', type: 'scatter', mode: 'lines+markers', line: { color: '#34d399', width: 2 }, marker: { size: 8 }, yaxis: 'y2' },
+    ], Object.assign({}, panelLayout, {
+      title: { text: 'Access and Agency', font: { size: 13 } },
+      margin: { l: 55, r: 75, t: 40, b: 85 },
+      yaxis: { title: 'Access', tickfont: { family: 'JetBrains Mono, monospace', size: 10 }, gridcolor: 'rgba(235,230,220,0.06)', titlefont: { size: 11, color: '#60a5fa' } },
+      yaxis2: { title: 'Agency', overlaying: 'y', side: 'right', tickfont: { family: 'JetBrains Mono, monospace', size: 10 }, gridcolor: 'rgba(235,230,220,0.03)', titlefont: { size: 11, color: '#34d399' } },
+      legend: { orientation: 'h', y: -0.12, font: { size: 10 } },
+    }), panelConfig);
+
+    // Panel 2: Use case breakdown (stacked bar)
+    Plotly.newPlot('panel-usecase', [
+      { x: releases, y: data.map(function(d) { return pct(d, 'usecase_coursework'); }), name: 'Coursework', type: 'bar', marker: { color: '#f87171' } },
+      { x: releases, y: data.map(function(d) { return pct(d, 'usecase_work'); }), name: 'Work', type: 'bar', marker: { color: '#fbbf24' } },
+      { x: releases, y: data.map(function(d) { return pct(d, 'usecase_personal'); }), name: 'Personal', type: 'bar', marker: { color: '#a78bfa' } },
+    ], Object.assign({}, panelLayout, {
+      title: { text: 'Use Case Breakdown', font: { size: 13 } },
+      barmode: 'stack',
+      yaxis: Object.assign({}, panelLayout.yaxis, { title: '%', range: [0, 100] }),
+      legend: { orientation: 'h', y: -0.12, font: { size: 10 } },
+    }), panelConfig);
+
+    // Panel 3: Collaboration patterns
+    Plotly.newPlot('panel-collaboration', [
+      { x: releases, y: data.map(function(d) { return pct(d, 'co_creation'); }), name: 'Co-creation', type: 'scatter', mode: 'lines+markers', line: { color: '#34d399', width: 2 }, marker: { size: 8 } },
+      { x: releases, y: data.map(function(d) { return pct(d, 'collab_directive'); }), name: 'Directive', type: 'scatter', mode: 'lines+markers', line: { color: '#f87171', width: 2 }, marker: { size: 8 } },
+    ], Object.assign({}, panelLayout, {
+      title: { text: 'Collaboration Pattern', font: { size: 13 } },
+      yaxis: Object.assign({}, panelLayout.yaxis, { title: '%', range: [0, 100] }),
+      legend: { orientation: 'h', y: -0.12, font: { size: 10 } },
+    }), panelConfig);
+
+    // Panel 4: Task success + conversations per million
+    var perCapita = data.map(function(d) {
+      if (!d || !d.population || d.population <= 0) return null;
+      return +(d.usage_count / d.population * 1000000).toFixed(1);
+    });
+    Plotly.newPlot('panel-success', [
+      { x: releases, y: data.map(function(d) { return pct(d, 'task_success_rate'); }), name: 'Task success %', type: 'scatter', mode: 'lines+markers', line: { color: '#fbbf24', width: 2 }, marker: { size: 8 } },
+      { x: releases, y: perCapita, name: 'Per 1M people', type: 'scatter', mode: 'lines+markers', line: { color: '#60a5fa', width: 2, dash: 'dot' }, marker: { size: 8 }, yaxis: 'y2' },
+    ], Object.assign({}, panelLayout, {
+      title: { text: 'Task Success and Usage', font: { size: 13 } },
+      margin: { l: 55, r: 75, t: 40, b: 85 },
+      yaxis: { title: 'Success %', tickfont: { family: 'JetBrains Mono, monospace', size: 10 }, gridcolor: 'rgba(235,230,220,0.06)', titlefont: { size: 11, color: '#fbbf24' }, range: [0, 100] },
+      yaxis2: { title: 'Per 1M', overlaying: 'y', side: 'right', tickfont: { family: 'JetBrains Mono, monospace', size: 10 }, gridcolor: 'rgba(235,230,220,0.03)', titlefont: { size: 11, color: '#60a5fa' } },
+      legend: { orientation: 'h', y: -0.12, font: { size: 10 } },
+    }), panelConfig);
+  }
+})();
+</script>
+
+<style>
+  .page-content {
+    padding: var(--space-lg) 0;
+  }
+
+  .lede {
+    font-size: var(--text-h3);
+    color: var(--text-primary);
+    line-height: 1.5;
+    margin-bottom: var(--space-md);
+  }
+
+  .controls {
+    margin-bottom: var(--space-md);
+  }
+
+  #explore-map {
+    width: 100%;
+    min-height: 500px;
+    margin-bottom: var(--space-lg);
+  }
+
+  #country-select {
+    font-family: var(--font-body);
+    font-size: var(--text-body);
+    padding: 12px 40px 12px 16px;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    width: 100%;
+    max-width: 400px;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+  }
+
+  #country-select:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+  }
+
+  .summary-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: var(--space-sm) var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .card-label {
+    font-family: var(--font-mono);
+    font-size: var(--text-mono);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .card-value {
+    font-family: var(--font-display);
+    font-size: var(--text-h3);
+    color: var(--text-primary);
+  }
+
+  .panel-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
+  }
+
+  .panel {
+    min-height: 340px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: var(--space-sm) var(--space-sm) var(--space-md);
+    overflow: hidden;
+  }
+
+  .panel :global(.js-plotly-plot),
+  .panel :global(.plot-container),
+  .panel :global(.plotly) {
+    width: 100% !important;
+  }
+
+  .no-data {
+    text-align: center;
+    padding: var(--space-xl);
+    color: var(--text-muted);
+  }
+
+  .panels-intro {
+    max-width: var(--max-width-chart);
+    margin-bottom: var(--space-md);
+  }
+
+  .panels-intro p {
+    color: var(--text-secondary);
+  }
+
+  @media (max-width: 900px) {
+    .summary-cards {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .panel-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .summary-cards {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

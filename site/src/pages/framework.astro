@@ -11,7 +11,7 @@ import Base from '../layouts/Base.astro';
         The AI Matrix plots countries on two axes: how broadly AI reaches their
         population (access) and how productively people use it once it arrives
         (agency). The framework comes from
-        <a href="https://doi.org/10.2139/ssrn.5228571" target="_blank" rel="noopener">Simpson (2025)</a>
+        <a href="https://doi.org/10.5281/zenodo.18181372" target="_blank" rel="noopener">Simpson (2026)</a>
         and is recomputed here each time Anthropic publishes new data.
       </p>
 
@@ -36,21 +36,21 @@ import Base from '../layouts/Base.astro';
       <h2>Four quadrants</h2>
 
       <div class="quadrant-grid">
-        <div class="quadrant quadrant--full-empowerment">
-          <h3><span class="stage-badge stage-badge--full-empowerment">Full Empowerment</span></h3>
-          <p>High access, high agency. AI is widely available and people co-create with it. No country sits here yet.</p>
-        </div>
-        <div class="quadrant quadrant--passive-dependency">
-          <h3><span class="stage-badge stage-badge--passive-dependency">Passive Dependency</span></h3>
-          <p>High access, low agency. Lots of people have AI, but they mostly issue one-off commands or use it for personal tasks. The US, UK, Germany, and Japan sit here.</p>
-        </div>
         <div class="quadrant quadrant--elite-empowerment">
           <h3><span class="stage-badge stage-badge--elite-empowerment">Elite Empowerment</span></h3>
           <p>Low access, high agency. Few people have AI, but those who do use it for real work. India, Brazil, and South Africa sit here.</p>
         </div>
+        <div class="quadrant quadrant--full-empowerment">
+          <h3><span class="stage-badge stage-badge--full-empowerment">Full Empowerment</span></h3>
+          <p>High access, high agency. AI is widely available and people co-create with it. No country sits here yet.</p>
+        </div>
         <div class="quadrant quadrant--full-dependency">
           <h3><span class="stage-badge stage-badge--full-dependency">Full Dependency</span></h3>
           <p>Low access, low agency. AI barely reaches the population, and what use exists skews toward coursework. Kenya and much of Sub-Saharan Africa sit here.</p>
+        </div>
+        <div class="quadrant quadrant--passive-dependency">
+          <h3><span class="stage-badge stage-badge--passive-dependency">Passive Dependency</span></h3>
+          <p>High access, low agency. Lots of people have AI, but they mostly issue one-off commands or use it for personal tasks. The US, UK, Germany, and Japan sit here.</p>
         </div>
       </div>
 
@@ -71,6 +71,8 @@ import Base from '../layouts/Base.astro';
 <style>
   .page-content {
     padding: var(--space-lg) 0;
+    max-width: var(--max-width-prose);
+    margin: 0 auto;
   }
 
   .lede {

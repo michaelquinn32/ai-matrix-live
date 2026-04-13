@@ -14,11 +14,11 @@
 /* ------------------------------------------------------------------ */
 
 :root {
-  /* Stage colors (Okabe-Ito derived, colorblind-safe) */
-  --stage-full-empowerment: #56B4E9;   /* Sky blue — high access, high agency */
-  --stage-elite-empowerment: #E69F00;  /* Amber — low access, high agency */
-  --stage-passive-dependency: #0072B2; /* Deep blue — high access, low agency */
-  --stage-full-dependency: #D55E00;    /* Vermillion — low access, low agency */
+  /* Stage colors (matching plot quadrant backgrounds) */
+  --stage-full-empowerment: #34d399;   /* Green — high access, high agency */
+  --stage-elite-empowerment: #fbbf24;  /* Amber — low access, high agency */
+  --stage-passive-dependency: #60a5fa; /* Blue — high access, low agency */
+  --stage-full-dependency: #f87171;    /* Red — low access, low agency */
 
   /* Accent */
   --accent: #0ea5c9;

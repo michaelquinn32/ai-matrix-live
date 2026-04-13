@@ -9,7 +9,7 @@ import Base from '../layouts/Base.astro';
 
       <p class="lede">
         How the scores are computed. The methodology replicates
-        <a href="https://doi.org/10.2139/ssrn.5228571" target="_blank" rel="noopener">Simpson (2025)</a>.
+        <a href="https://doi.org/10.5281/zenodo.18181372" target="_blank" rel="noopener">Simpson (2026)</a>.
         All code is
         <a href="https://github.com/michaelquinn32/ai-matrix-live/tree/main/pipeline" target="_blank" rel="noopener">open source</a>.
       </p>
@@ -127,24 +127,50 @@ import Base from '../layouts/Base.astro';
         <li><strong>Variable availability.</strong> Earlier releases have fewer agency components, so cross-wave comparisons are less precise.</li>
       </ul>
 
-      <h2>Citation</h2>
-      <p>If you use this data or methodology, please cite:</p>
+      <h2>Papers</h2>
+      <p>
+        The AI Matrix framework is developed across two papers. The first
+        introduces the conceptual framework (access vs agency, four quadrants).
+        The second operationalizes it with public data and validates the
+        bottleneck logic: adoption correlates most strongly with the weaker of
+        the two axes, not their average.
+      </p>
+
       <div class="citation-block">
         <p>
-          Simpson, E. (2025). Decomposing the Capability Overhang: Access, Agency,
-          and the Geography of AI Adoption. SSRN.
-          <a href="https://doi.org/10.2139/ssrn.5228571" target="_blank" rel="noopener">https://doi.org/10.2139/ssrn.5228571</a>
+          Simpson, E. (2026). The AI Matrix as Diagnostic: Access, Agency, and Adoption. Zenodo.
+          <a href="https://doi.org/10.5281/zenodo.18181372" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.18181372</a>
         </p>
       </div>
+
+      <div class="citation-block">
+        <p>
+          Simpson, E. (2026). Decomposing the Capability Overhang: Access, Agency,
+          and the Geography of AI Adoption. Zenodo.
+          <a href="https://doi.org/10.5281/zenodo.19250306" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.19250306</a>
+        </p>
+      </div>
+
+      <h2>Citation</h2>
+      <p>If you use this data or methodology, please cite:</p>
       <details>
         <summary>BibTeX</summary>
-        <pre><code>@article&#123;simpson2025decomposing,
+        <pre><code>@article&#123;simpson2026aimatrix,
+  title=&#123;The AI Matrix as Diagnostic: Access, Agency,
+         and Adoption&#125;,
+  author=&#123;Simpson, Ewan&#125;,
+  year=&#123;2026&#125;,
+  publisher=&#123;Zenodo&#125;,
+  doi=&#123;10.5281/zenodo.18181372&#125;
+&#125;
+
+@article&#123;simpson2026decomposing,
   title=&#123;Decomposing the Capability Overhang: Access, Agency,
          and the Geography of AI Adoption&#125;,
   author=&#123;Simpson, Ewan&#125;,
-  year=&#123;2025&#125;,
-  journal=&#123;SSRN&#125;,
-  doi=&#123;10.2139/ssrn.5228571&#125;
+  year=&#123;2026&#125;,
+  publisher=&#123;Zenodo&#125;,
+  doi=&#123;10.5281/zenodo.19250306&#125;
 &#125;</code></pre>
       </details>
     </div>
@@ -154,6 +180,8 @@ import Base from '../layouts/Base.astro';
 <style>
   .page-content {
     padding: var(--space-lg) 0;
+    max-width: var(--max-width-prose);
+    margin: 0 auto;
   }
 
   .lede {

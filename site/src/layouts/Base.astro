@@ -17,7 +17,7 @@ const currentPath = Astro.url.pathname;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>{title === 'Dashboard' ? 'AI Matrix Live' : `${title} — AI Matrix Live`}</title>
+    <title>{title === 'Home' ? 'AI Matrix Live' : `${title} — AI Matrix Live`}</title>
   </head>
   <body>
     <nav class="nav">
@@ -27,7 +27,8 @@ const currentPath = Astro.url.pathname;
           <span class="nav__logo-badge">Live</span>
         </a>
         <ul class="nav__links">
-          <li><a href="/" class:list={[{ active: currentPath === '/' }]}>Dashboard</a></li>
+          <li><a href="/" class:list={[{ active: currentPath === '/' }]}>Home</a></li>
+          <li><a href="/explore" class:list={[{ active: currentPath === '/explore' || currentPath === '/explore/' }]}>Explore</a></li>
           <li><a href="/framework" class:list={[{ active: currentPath === '/framework' || currentPath === '/framework/' }]}>Framework</a></li>
           <li><a href="/methodology" class:list={[{ active: currentPath === '/methodology' || currentPath === '/methodology/' }]}>Methodology</a></li>
           <li><a href="/updates" class:list={[{ active: currentPath === '/updates' || currentPath === '/updates/' }]}>Updates</a></li>
@@ -50,7 +51,7 @@ const currentPath = Astro.url.pathname;
         <p>
           Data: <a href="https://huggingface.co/datasets/Anthropic/EconomicIndex" target="_blank" rel="noopener">Anthropic Economic Index</a>
           &middot;
-          Paper: <a href="https://doi.org/10.2139/ssrn.5228571" target="_blank" rel="noopener">Simpson (2025)</a>
+          Paper: <a href="https://doi.org/10.5281/zenodo.18181372" target="_blank" rel="noopener">Simpson (2026)</a>
           &middot;
           Code: <a href="https://github.com/michaelquinn32/ai-matrix-live" target="_blank" rel="noopener">GitHub</a>
         </p>
@@ -123,20 +124,27 @@ const currentPath = Astro.url.pathname;
       }
 
       .footer {
-        margin-top: var(--space-xl);
-        padding: var(--space-lg) 0;
+        margin-top: var(--space-lg);
+        padding: var(--space-sm) 0;
         border-top: 1px solid var(--border);
       }
 
+      .footer__inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+      }
+
       .footer p {
-        font-size: var(--text-small);
+        font-size: var(--text-mono);
         color: var(--text-muted);
         text-align: center;
+        margin: 0;
       }
 
       .footer__authors {
         color: var(--text-secondary);
-        margin-bottom: var(--space-xs);
       }
 
       .footer a {
@@ -207,10 +215,10 @@ const currentPath = Astro.url.pathname;
         ctx.arc(cx, cy, r, 0, Math.PI * 2);
         ctx.clip();
 
-        // Graticule: longitude lines every 30 degrees
+        // Graticule: longitude lines every 15 degrees
         ctx.strokeStyle = 'rgba(235, 230, 220, 0.045)';
         ctx.lineWidth = 0.5;
-        for (var lon = -180; lon < 180; lon += 30) {
+        for (var lon = -180; lon < 180; lon += 15) {
           ctx.beginPath();
           var first = true;
           for (var lat = -90; lat <= 90; lat += 2) {
@@ -223,8 +231,8 @@ const currentPath = Astro.url.pathname;
           ctx.stroke();
         }
 
-        // Graticule: latitude lines every 30 degrees
-        for (var lat2 = -60; lat2 <= 60; lat2 += 30) {
+        // Graticule: latitude lines every 15 degrees
+        for (var lat2 = -75; lat2 <= 75; lat2 += 15) {
           ctx.beginPath();
           var first2 = true;
           for (var lon2 = -180; lon2 <= 180; lon2 += 2) {
