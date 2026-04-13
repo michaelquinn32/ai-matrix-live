@@ -17,7 +17,7 @@ const currentPath = Astro.url.pathname;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>{title} — AI Matrix Live</title>
+    <title>{title === 'Dashboard' ? 'AI Matrix Live' : `${title} — AI Matrix Live`}</title>
   </head>
   <body>
     <nav class="nav">
@@ -35,12 +35,18 @@ const currentPath = Astro.url.pathname;
       </div>
     </nav>
 
+    <canvas id="globe-bg" aria-hidden="true"></canvas>
+
     <main>
       <slot />
     </main>
 
     <footer class="footer">
       <div class="footer__inner container">
+        <p class="footer__authors">
+          By <a href="https://ewansimpson.org/" target="_blank" rel="noopener">Ewan Simpson</a>
+          and <a href="https://msquinn.com" target="_blank" rel="noopener">Michael Quinn</a>
+        </p>
         <p>
           Data: <a href="https://huggingface.co/datasets/Anthropic/EconomicIndex" target="_blank" rel="noopener">Anthropic Economic Index</a>
           &middot;
@@ -128,6 +134,11 @@ const currentPath = Astro.url.pathname;
         text-align: center;
       }
 
+      .footer__authors {
+        color: var(--text-secondary);
+        margin-bottom: var(--space-xs);
+      }
+
       .footer a {
         color: var(--text-secondary);
       }
@@ -141,6 +152,135 @@ const currentPath = Astro.url.pathname;
           font-size: var(--text-mono);
         }
       }
+      #globe-bg {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: -1;
+      }
     </style>
+
+    <script is:inline>
+    (function() {
+      var canvas = document.getElementById('globe-bg');
+      if (!canvas) return;
+      var ctx = canvas.getContext('2d');
+      var dpr = window.devicePixelRatio || 1;
+      var landRings = null;
+
+      // Load land outlines
+      fetch('/land.json').then(function(r) { return r.json(); }).then(function(data) {
+        landRings = data;
+        draw();
+      });
+
+      function resize() {
+        canvas.width = window.innerWidth * dpr;
+        canvas.height = window.innerHeight * dpr;
+        canvas.style.width = window.innerWidth + 'px';
+        canvas.style.height = window.innerHeight + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        draw();
+      }
+
+      function draw() {
+        var w = window.innerWidth;
+        var h = window.innerHeight;
+        ctx.clearRect(0, 0, w, h);
+
+        // Globe sits in bottom third, center cut off by viewport bottom
+        // Radius is large so it dominates the lower portion
+        var r = Math.max(w, h) * 0.6;
+        var cx = w * 0.5;
+        var cy = h + r * 0.35;  // push center below viewport so top ~65% of globe shows
+
+        // Rotation: tilt to show Europe/Africa/Asia facing
+        var rotLon = -10 * Math.PI / 180;
+        var rotLat = 20 * Math.PI / 180;
+
+        // Clip to globe circle
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.clip();
+
+        // Graticule: longitude lines every 30 degrees
+        ctx.strokeStyle = 'rgba(235, 230, 220, 0.045)';
+        ctx.lineWidth = 0.5;
+        for (var lon = -180; lon < 180; lon += 30) {
+          ctx.beginPath();
+          var first = true;
+          for (var lat = -90; lat <= 90; lat += 2) {
+            var p = project(lat, lon, rotLat, rotLon, cx, cy, r);
+            if (p) {
+              if (first) { ctx.moveTo(p[0], p[1]); first = false; }
+              else ctx.lineTo(p[0], p[1]);
+            } else { first = true; }
+          }
+          ctx.stroke();
+        }
+
+        // Graticule: latitude lines every 30 degrees
+        for (var lat2 = -60; lat2 <= 60; lat2 += 30) {
+          ctx.beginPath();
+          var first2 = true;
+          for (var lon2 = -180; lon2 <= 180; lon2 += 2) {
+            var p2 = project(lat2, lon2, rotLat, rotLon, cx, cy, r);
+            if (p2) {
+              if (first2) { ctx.moveTo(p2[0], p2[1]); first2 = false; }
+              else ctx.lineTo(p2[0], p2[1]);
+            } else { first2 = true; }
+          }
+          ctx.stroke();
+        }
+
+        // Land outlines
+        if (landRings) {
+          ctx.strokeStyle = 'rgba(235, 230, 220, 0.07)';
+          ctx.lineWidth = 0.5;
+          for (var i = 0; i < landRings.length; i++) {
+            var ring = landRings[i];
+            ctx.beginPath();
+            var firstPt = true;
+            for (var j = 0; j < ring.length; j++) {
+              var pt = project(ring[j][1], ring[j][0], rotLat, rotLon, cx, cy, r);
+              if (pt) {
+                if (firstPt) { ctx.moveTo(pt[0], pt[1]); firstPt = false; }
+                else ctx.lineTo(pt[0], pt[1]);
+              } else { firstPt = true; }
+            }
+            ctx.stroke();
+          }
+        }
+
+        // Globe outline (subtle)
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(235, 230, 220, 0.06)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      // Orthographic projection
+      function project(lat, lon, rotLat, rotLon, cx, cy, radius) {
+        var lam = lon * Math.PI / 180 + rotLon;
+        var phi = lat * Math.PI / 180;
+        var cosPhi = Math.cos(phi);
+        var x = cosPhi * Math.sin(lam);
+        var y = Math.sin(phi) * Math.cos(rotLat) - cosPhi * Math.cos(lam) * Math.sin(rotLat);
+        var z = Math.sin(phi) * Math.sin(rotLat) + cosPhi * Math.cos(lam) * Math.cos(rotLat);
+        if (z < 0) return null;
+        return [cx + x * radius, cy - y * radius];
+      }
+
+      window.addEventListener('resize', resize);
+      resize();
+    })();
+    </script>
   </body>
 </html>

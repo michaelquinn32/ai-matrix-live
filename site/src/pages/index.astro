@@ -19,20 +19,22 @@ import Base from '../layouts/Base.astro';
     </div>
   </section>
 
-  <section class="container" style="margin-top: var(--space-lg);">
-    <div class="prose">
-      <h2>What you're looking at</h2>
-      <p>
-        Each dot is a country. The horizontal axis measures <strong>access</strong>:
-        how many people per capita are using Claude. The vertical axis measures
-        <strong>agency</strong>: whether those people co-create with AI or just
-        issue commands. Bigger dots mean more total conversations.
-      </p>
-      <p>
-        Press play to watch countries shift between releases. The four colors
-        map to the AI Matrix quadrants.
-        <a href="/framework">Learn about the framework &rarr;</a>
-      </p>
+  <section class="explainer">
+    <div class="container">
+      <div class="chart-container">
+        <h2>What you're looking at</h2>
+        <p>
+          Each dot is a country. The horizontal axis measures <strong>access</strong>:
+          how many people per capita are using Claude. The vertical axis measures
+          <strong>agency</strong>: whether those people co-create with AI or just
+          issue commands. Bigger dots mean larger populations.
+        </p>
+        <p>
+          Press play to watch countries shift between releases. Colors show
+          world regions. The quadrant backgrounds show the four AI Matrix stages.
+          <a href="/framework">Learn about the framework &rarr;</a>
+        </p>
+      </div>
     </div>
   </section>
 </Base>
@@ -439,6 +441,10 @@ import Base from '../layouts/Base.astro';
     font-size: var(--text-small);
     color: var(--text-muted);
     margin-top: var(--space-sm);
+  }
+
+  .explainer {
+    margin-top: var(--space-lg);
   }
 
   #matrix-scatter {
