@@ -153,10 +153,15 @@ import Base from '../layouts/Base.astro';
   });
 
   Plotly.newPlot('explore-map', buildMapData(waves[waves.length-1]), {
-    geo: { showframe:false, showcoastlines:false, showcountries:true, countrycolor:'rgba(235,230,220,0.08)', showland:true, landcolor:'#16171c', showocean:true, oceancolor:'#0f1014', showlakes:false, projection:{type:'natural earth'}, bgcolor:'#0f1014' },
+    geo: { showframe:false, showcoastlines:false, showcountries:true, countrycolor:'rgba(235,230,220,0.08)', showland:true, landcolor:'#16171c', showocean:true, oceancolor:'#0f1014', showlakes:false, projection:{type:'natural earth'}, bgcolor:'#0f1014',
+      domain: { x: [0, 1], y: [0.18, 0.98] },
+      lonaxis: { range: [-160, 175] },
+      lataxis: { range: [-55, 80] },
+      fitbounds: 'locations',
+    },
     plot_bgcolor:'#0f1014', paper_bgcolor:'#0f1014',
     font: { color:'rgba(240,237,230,0.95)', family:'Instrument Sans, system-ui, sans-serif' },
-    margin: { l:0, r:0, t:50, b:60 },
+    margin: { l:40, r:40, t:50, b:10 },
     annotations: [
       {x:0.01,y:1.06,xref:'paper',yref:'paper',showarrow:false,xanchor:'left',text:'<span style="color:#34d399">&#9679;</span> Full Empowerment',font:{family:'JetBrains Mono, monospace',size:11,color:'rgba(240,237,230,0.85)'}},
       {x:0.22,y:1.06,xref:'paper',yref:'paper',showarrow:false,xanchor:'left',text:'<span style="color:#fbbf24">&#9679;</span> Elite Empowerment',font:{family:'JetBrains Mono, monospace',size:11,color:'rgba(240,237,230,0.85)'}},
@@ -356,6 +361,7 @@ import Base from '../layouts/Base.astro';
 
   #explore-map {
     width: 100%;
+    aspect-ratio: 2 / 1.2;
     min-height: 500px;
     margin-bottom: var(--space-lg);
   }

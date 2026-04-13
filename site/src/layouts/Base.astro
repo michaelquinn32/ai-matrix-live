@@ -127,6 +127,9 @@ const currentPath = Astro.url.pathname;
         margin-top: var(--space-lg);
         padding: var(--space-sm) 0;
         border-top: 1px solid var(--border);
+        background: var(--bg);
+        position: relative;
+        z-index: 1;
       }
 
       .footer__inner {
@@ -215,10 +218,10 @@ const currentPath = Astro.url.pathname;
         ctx.arc(cx, cy, r, 0, Math.PI * 2);
         ctx.clip();
 
-        // Graticule: longitude lines every 15 degrees
+        // Graticule: longitude lines every 10 degrees
         ctx.strokeStyle = 'rgba(235, 230, 220, 0.045)';
         ctx.lineWidth = 0.5;
-        for (var lon = -180; lon < 180; lon += 15) {
+        for (var lon = -180; lon < 180; lon += 10) {
           ctx.beginPath();
           var first = true;
           for (var lat = -90; lat <= 90; lat += 2) {
@@ -231,8 +234,8 @@ const currentPath = Astro.url.pathname;
           ctx.stroke();
         }
 
-        // Graticule: latitude lines every 15 degrees
-        for (var lat2 = -75; lat2 <= 75; lat2 += 15) {
+        // Graticule: latitude lines every 10 degrees
+        for (var lat2 = -80; lat2 <= 80; lat2 += 10) {
           ctx.beginPath();
           var first2 = true;
           for (var lon2 = -180; lon2 <= 180; lon2 += 2) {
