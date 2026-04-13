@@ -7,6 +7,5 @@ export default defineConfig({
   // Cloudflare Pages serves the built files from dist/.
   output: 'static',
 
-  // Will be set to the Cloudflare Pages URL once deployed.
-  // site: 'https://ai-matrix-live.pages.dev',
+  site: 'https://aimatrixlive.com',
 });

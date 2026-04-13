@@ -8,7 +8,7 @@ alwaysApply: true
 # AI Matrix Live
 
 Public dashboard tracking global AI adoption using the AI Matrix framework from
-[Simpson (2025)](https://doi.org/10.2139/ssrn.5228571). Plots countries on two
+[Simpson (2026)](https://doi.org/10.5281/zenodo.18181372). Plots countries on two
 dimensions — access (how broadly AI reaches the population) and agency (how
 productively they engage) — placing each in one of four quadrants: Full
 Empowerment, Elite Empowerment, Passive Dependency, Full Dependency.
@@ -42,7 +42,7 @@ Cloudflare Pages site. Deploys automatically on push to `main`.
 - `notebooks/` — Marimo notebooks for exploration
 - `site/` — Astro static site (HTML, CSS, JS)
 - `site/public/data/` — JSON output consumed by the site
-- `site/src/pages/` — Astro pages (index, framework, methodology, updates)
+- `site/src/pages/` — Astro pages (index, explore, framework, methodology)
 - `site/src/layouts/` — Shared layout (nav, footer)
 - `site/src/styles/` — Global CSS design system
 
