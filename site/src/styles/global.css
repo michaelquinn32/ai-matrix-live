@@ -168,6 +168,13 @@ code, pre {
   margin: 0 auto;
 }
 
+.chart-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
 /* ------------------------------------------------------------------ */
 /* Stage badges                                                        */
 /* ------------------------------------------------------------------ */

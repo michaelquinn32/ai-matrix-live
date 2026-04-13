@@ -31,7 +31,6 @@ const currentPath = Astro.url.pathname;
           <li><a href="/explore" class:list={[{ active: currentPath === '/explore' || currentPath === '/explore/' }]}>Explore</a></li>
           <li><a href="/framework" class:list={[{ active: currentPath === '/framework' || currentPath === '/framework/' }]}>Framework</a></li>
           <li><a href="/methodology" class:list={[{ active: currentPath === '/methodology' || currentPath === '/methodology/' }]}>Methodology</a></li>
-          <li><a href="/updates" class:list={[{ active: currentPath === '/updates' || currentPath === '/updates/' }]}>Updates</a></li>
         </ul>
       </div>
     </nav>
@@ -197,19 +196,20 @@ const currentPath = Astro.url.pathname;
         draw();
       }
 
+      var rotOffset = 0;
+
       function draw() {
         var w = window.innerWidth;
         var h = window.innerHeight;
         ctx.clearRect(0, 0, w, h);
 
         // Globe sits in bottom third, center cut off by viewport bottom
-        // Radius is large so it dominates the lower portion
         var r = Math.max(w, h) * 0.6;
         var cx = w * 0.5;
-        var cy = h + r * 0.35;  // push center below viewport so top ~65% of globe shows
+        var cy = h + r * 0.35;
 
-        // Rotation: tilt to show Europe/Africa/Asia facing
-        var rotLon = -10 * Math.PI / 180;
+        // Slow rotation: longitude drifts over time
+        var rotLon = (-10 + rotOffset) * Math.PI / 180;
         var rotLat = 20 * Math.PI / 180;
 
         // Clip to globe circle
@@ -274,7 +274,22 @@ const currentPath = Astro.url.pathname;
         ctx.lineWidth = 1;
         ctx.stroke();
 
+        // Horizon glow: faint radial gradient at the top edge of the globe
+        var glow = ctx.createRadialGradient(cx, cy - r * 0.3, r * 0.4, cx, cy, r);
+        glow.addColorStop(0, 'rgba(14, 165, 201, 0.03)');
+        glow.addColorStop(0.5, 'rgba(14, 165, 201, 0.01)');
+        glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = glow;
+        ctx.fill();
+
         ctx.restore();
+      }
+
+      // Animation loop: slow rotation
+      function animate() {
+        rotOffset += 0.008;  // very slow drift
+        draw();
+        requestAnimationFrame(animate);
       }
 
       // Orthographic projection
@@ -289,8 +304,15 @@ const currentPath = Astro.url.pathname;
         return [cx + x * radius, cy - y * radius];
       }
 
-      window.addEventListener('resize', resize);
+      window.addEventListener('resize', function() {
+        canvas.width = window.innerWidth * dpr;
+        canvas.height = window.innerHeight * dpr;
+        canvas.style.width = window.innerWidth + 'px';
+        canvas.style.height = window.innerHeight + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      });
       resize();
+      animate();
     })();
     </script>
   </body>

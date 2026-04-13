@@ -13,7 +13,9 @@ import Base from '../layouts/Base.astro';
         </p>
       </div>
       <div class="chart-container">
-        <div id="matrix-scatter"></div>
+        <div class="chart-card">
+          <div id="matrix-scatter"></div>
+        </div>
       </div>
       <p class="hero__updated" id="last-updated"></p>
     </div>
@@ -21,7 +23,7 @@ import Base from '../layouts/Base.astro';
 
   <section class="explainer">
     <div class="container">
-      <div class="chart-container">
+      <div class="prose">
         <h2>The AI Matrix</h2>
         <p>
           Each dot is a country. The horizontal axis measures <strong>access</strong>:
@@ -203,7 +205,7 @@ import Base from '../layouts/Base.astro';
           size: countries.map(function (c) { return dotSize(c.population); }),
           color: REGION_COLORS[region] || '#888',
           opacity: 0.85,
-          line: { width: 1, color: 'rgba(255,255,255,0.15)' },
+          line: { width: 1, color: 'rgba(235,230,220,0.15)' },
         },
         name: region,
         type: 'scatter',
@@ -336,9 +338,9 @@ import Base from '../layouts/Base.astro';
         font: { family: 'Instrument Serif, serif', size: 13, color: 'rgba(248,113,113,0.35)' },
         xanchor: 'left', yanchor: 'bottom', xshift: 8, yshift: 8 },
     ],
-    plot_bgcolor: '#0f1014',
-    paper_bgcolor: '#0f1014',
-    font: { color: 'rgba(235,230,220,0.85)', family: 'Instrument Sans, system-ui, sans-serif' },
+    plot_bgcolor: '#16171c',
+    paper_bgcolor: '#16171c',
+    font: { color: 'rgba(240,237,230,0.95)', family: 'Instrument Sans, system-ui, sans-serif' },
     hoverlabel: {
       font: { family: 'JetBrains Mono, monospace', size: 12, color: '#f0ede6' },
       bgcolor: 'rgba(10,10,14,0.95)',
